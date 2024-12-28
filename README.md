@@ -17,7 +17,6 @@ Run the script from your COMMAND LINE first
 
 # Launch Arguments  
 To change your settings or your auth/api key run the script with `-c`  
-To set your uploader use `-upldr`  
 
 # REMEMBER TO CHMOD!!!  
 If you want to keybind this remember to do `chmod +x` to it!!  
