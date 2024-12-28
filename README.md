@@ -25,7 +25,8 @@ If you want to keybind this remember to do `chmod +x` to it!!
 clipboard.sh - copies to clipboard  
 guns.lol.sh - for guns.lol  
 e-z.gg.sh - for e-z.gg  
-hyprupld.sh - for everything  
+nest.rip.sh - for nest.rip  
+hyprupld.sh - for testing  
 
 # Supported Package Managers  
 ### These are all the common package managers  
