@@ -212,6 +212,7 @@ fi
 image_url=$(curl -X POST -F "file=@"$temp_file -H "key: "$auth -v "$url" 2>/dev/null)
 echo $image_url > /tmp/upload.json
 response_file="/tmp/upload.json"
+image_url=$(echo "$response" | jq -r '.imageUrl')
 
 if [[ -z "$image_url" || "$image_url" == "null" ]]; then
     notify-send "Error" "Failed to upload screenshot." -a "Screenshot Script"
@@ -231,6 +232,7 @@ fi
 
 # Copy URL to clipboard
 cat /tmp/upload.json | jq -r ".imageUrl" | xclip -sel c
+echo -n "$image_url" | xclip -selection clipboard
 
 # Get the clipboard contents
 # clipboard_content=$(xclip -selection clipboard -o)
