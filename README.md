@@ -11,7 +11,7 @@
 Complex scripts that have a wide spectrum of support for image uploading  
 Issues can be used to request more support or to report issues/bugs  
 
-# SETUP  
+# IMPORTANT SETUP  
 Run the script from your COMMAND LINE first  
 - Also do this if it does nothing, it needs to install deps over CLI  
 
