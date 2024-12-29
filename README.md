@@ -55,4 +55,4 @@ hyprupld.sh - for testing
 - Sway
 
 # Custom URL Support
-Manually done but instrctions can be found on the wiki!
+Manually done but instrctions can be found on the wiki!  
