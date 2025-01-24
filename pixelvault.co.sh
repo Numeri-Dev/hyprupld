@@ -19,10 +19,10 @@
 
 
 # Main script variables
-url="https://guns.lol/api/upload"
+url="https://pixelvault.co/"
 temp_file="/tmp/screenshot.png"
 response_file="/tmp/upload.json"
-settings_file="$HOME/.config/guns/settings.json"
+settings_file="$HOME/.config/pixelvault.co/settings.json"
 pckmgrs_file="$HOME/.config/hyprupld/pckmgrs.json"
 
 # Helper functions
@@ -211,8 +211,9 @@ if [[ ! -f "$temp_file" ]]; then
 fi
 
 # Upload screenshot
-response=$(curl -s -X POST -F "file=@$temp_file" -F "key=$auth" "$url")
-image_url=$(echo "$response" | jq -r '.link')
+image_url=$(curl -X POST -F "file=@"$temp_file -H "key: "$auth -v "$url" 2>/dev/null)
+echo $image_url > /tmp/upload.json
+response_file="/tmp/upload.json"
 
 if [[ -z "$image_url" || "$image_url" == "null" ]]; then
     notify-send "Error" "Failed to upload screenshot." -a "Screenshot Script"
@@ -222,19 +223,27 @@ fi
 
 # List of URLs to choose from
 # This is if you want to use multiple domains
+
+# List of URLs to choose from
+# This is if you want to use multiple domains
 # url_list=(
 #   "guns.website.com"
 #   "guns.website2.com"
 # )
 
-# Copy url to clipboard
-echo -n "$image_url" | xclip -selection clipboard
+# Copy URL to clipboard
+cat /tmp/upload.json | jq -r ".imageUrl" | xclip -sel c
 
-# Modify clipboard contents by replacing "xvids.lol" with "guns.website.com"
+# Get the clipboard contents
 # clipboard_content=$(xclip -selection clipboard -o)
-# modified_content=$(echo "$clipboard_content" | sed 's/xvids.lol/$random_url/g')
 
-# Set the modified content back to the clipboard, uncomment if using custom url
+# Pick a random URL from the list
+# random_url=${url_list[RANDOM % ${#url_list[@]}]}
+
+# Replace "xvids.lol" with the randomly chosen URL
+#modified_content=$(echo "$clipboard_content" | sed "s/xvids.lol/$random_url/g")
+
+# Set the modified content back to the clipboard
 # echo -n "$modified_content" | xclip -selection clipboard
 
 # Final alert, swap these IF you are using a custom url

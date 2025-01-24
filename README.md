@@ -28,6 +28,7 @@ clipboard.sh - copies to clipboard
 guns.lol.sh - for guns.lol  
 e-z.gg.sh - for e-z.gg  
 nest.rip.sh - for nest.rip  
+pixelvault.co.sh - for pixelvault.co
 hyprupld.sh - for testing  
 
 # Supported Package Managers  
