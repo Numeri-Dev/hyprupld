@@ -256,5 +256,5 @@ clipboard_content=$(xclip -selection clipboard -o)
 # notify-send "Image URL copied to clipboard" "$modified_content" -a "Screenshot Script" -i "$temp_file"
 notify-send "Image URL copied to clipboard" "$clipboard_content" -a "Screenshot Script" -i "$temp_file"
 
-# Clean up temporary filesapi.e-z.host/files
-# rm -f "$temp_file" "$response_file"
+# Clean up temporary files
+rm -f "$temp_file" "$response_file"
