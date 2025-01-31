@@ -19,7 +19,7 @@
 
 
 # Main script variables
-url="https://pixelvault.co/"
+url="https://pixelvault.co"
 temp_file="/tmp/screenshot.png"
 response_file="/tmp/upload.json"
 settings_file="$HOME/.config/pixelvault.co/settings.json"
@@ -210,10 +210,17 @@ if [[ ! -f "$temp_file" ]]; then
     exit 1
 fi
 
+# Get the current version of Firefox
+firefox_version=$(firefox --version | awk '{print $3}')
+
 # Upload screenshot
-image_url=$(curl -X POST -F "file=@"$temp_file -H "key: "$auth -v "$url" 2>/dev/null)
+image_url=$(curl -X POST -F "file=@"$temp_file \
+    -H "Content-Type: multipart/form-data" \
+    -H "Authorization: $auth" \
+    -H "User-Agent: Mozilla/5.0 (Wayland; Linux x86_64; rv:$firefox_version) Gecko/20100101 Firefox/$firefox_version" \
+    -v "$url" 2>/dev/null)
 echo $image_url > /tmp/upload.json
-response_file="/tmp/upload.json"
+response_file="/tmp/upload.json"  #Note from RunaXR: Basti I'm going to strangle you with this one
 
 if [[ -z "$image_url" || "$image_url" == "null" ]]; then
     notify-send "Error" "Failed to upload screenshot." -a "Screenshot Script"
@@ -227,28 +234,27 @@ fi
 # List of URLs to choose from
 # This is if you want to use multiple domains
 # url_list=(
-#   "guns.website.com"
-#   "guns.website2.com"
+#   "pxl.website.com"
 # )
 
 # Copy URL to clipboard
-cat /tmp/upload.json | jq -r ".imageUrl" | xclip -sel c
+cat /tmp/upload.json | jq -r ".resource" | xclip -sel c
 
 # Get the clipboard contents
-# clipboard_content=$(xclip -selection clipboard -o)
+clipboard_content=$(xclip -selection clipboard -o)
 
 # Pick a random URL from the list
 # random_url=${url_list[RANDOM % ${#url_list[@]}]}
 
 # Replace "xvids.lol" with the randomly chosen URL
-#modified_content=$(echo "$clipboard_content" | sed "s/xvids.lol/$random_url/g")
+# modified_content=$(echo "$clipboard_content" | sed "s/xvids.lol/$random_url/g")
 
 # Set the modified content back to the clipboard
 # echo -n "$modified_content" | xclip -selection clipboard
 
 # Final alert, swap these IF you are using a custom url
 # notify-send "Image URL copied to clipboard" "$modified_content" -a "Screenshot Script" -i "$temp_file"
-notify-send "Image URL copied to clipboard" "$image_url" -a "Screenshot Script" -i "$temp_file"
+notify-send "Image URL copied to clipboard" "$clipboard_content" -a "Screenshot Script" -i "$temp_file"
 
-# Clean up temporary files
-rm -f "$temp_file" "$response_file"
+# Clean up temporary filesapi.e-z.host/files
+# rm -f "$temp_file" "$response_file"
