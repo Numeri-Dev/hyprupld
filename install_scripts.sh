@@ -52,20 +52,29 @@ print_header() {
 SCRIPTS_DIR="$(realpath "$(dirname "$0")/Compiled")"
 
 # Directory where we'll create the symbolic links
-# Using ~/.local/bin which is commonly in PATH and doesn't require sudo
-INSTALL_DIR="$HOME/.local/bin"
+# Using /usr/local/bin which is in the system PATH
+INSTALL_DIR="/usr/local/bin"
 
 print_header "HyprUpld Installation Script"
 print_info "Script directory: $SCRIPTS_DIR"
 print_info "Installation directory: $INSTALL_DIR"
 
-# Create the install directory if it doesn't exist
+# Create the install directory if it doesn't exist and check permissions
 if [ ! -d "$INSTALL_DIR" ]; then
-    print_info "Creating installation directory $INSTALL_DIR..."
-    mkdir -p "$INSTALL_DIR"
+    print_info "Creating installation directory $INSTALL_DIR (requires sudo)..."
+    sudo mkdir -p "$INSTALL_DIR"
     print_success "Directory created successfully."
 else
     print_info "Installation directory already exists."
+fi
+
+# Check if we have write permissions to the install directory
+if [ ! -w "$INSTALL_DIR" ]; then
+    print_warning "You don't have write permissions to $INSTALL_DIR"
+    print_info "Running with sudo for the installation..."
+    NEED_SUDO=true
+else
+    NEED_SUDO=false
 fi
 
 # Check if the Scripts directory exists
@@ -97,8 +106,12 @@ create_link() {
         print_info "Creating new link for $target_name"
     fi
     
-    # Create the symbolic link
-    ln -sf "$source" "$target"
+    # Create the symbolic link (with sudo if needed)
+    if [ "$NEED_SUDO" = true ]; then
+        sudo ln -sf "$source" "$target"
+    else
+        ln -sf "$source" "$target"
+    fi
     print_success "Created link: ${BOLD}$target_name${NC} -> ${CYAN}$(basename "$source")${NC}"
 }
 
@@ -127,36 +140,9 @@ done
 
 print_header "Checking PATH Configuration"
 
-# Check if INSTALL_DIR is in PATH
-if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-    print_warning "$INSTALL_DIR is not in your PATH."
-    
-    # For Bash/Zsh users, show instructions
-    echo -e "${YELLOW}For Bash users (add to ~/.bashrc):${NC}"
-    echo -e "  ${CYAN}export PATH=\"\$PATH:$INSTALL_DIR\"${NC}"
-    echo ""
-    echo -e "${YELLOW}For Zsh users (add to ~/.zshrc):${NC}"
-    echo -e "  ${CYAN}export PATH=\"\$PATH:$INSTALL_DIR\"${NC}"
-    echo ""
-    
-    # For Fish users, attempt to automatically add to PATH
-    if command -v fish &>/dev/null; then
-        print_info "Detected Fish shell. Attempting to add $INSTALL_DIR to your PATH..."
-        if fish -c "set -U fish_user_paths \$fish_user_paths $INSTALL_DIR"; then
-            print_success "Successfully added to Fish shell PATH!"
-        else
-            print_error "Failed to add to Fish shell PATH. Please add manually."
-        fi
-    else
-        echo -e "${YELLOW}For Fish users (add to ~/.config/fish/config.fish):${NC}"
-        echo -e "  ${CYAN}set -x PATH \$PATH $INSTALL_DIR${NC}"
-        echo ""
-        echo -e "${YELLOW}Or run this command for Fish shell:${NC}"
-        echo -e "  ${CYAN}fish -c \"set -U fish_user_paths \$fish_user_paths $INSTALL_DIR\"${NC}"
-    fi
-else
-    print_success "$INSTALL_DIR is already in your PATH."
-fi
+# Since /usr/local/bin is typically in the system PATH, we don't need to check
+# or modify user shell configurations
+print_success "$INSTALL_DIR is in the system-wide PATH and available to all users and applications."
 
 print_header "Installation Complete!"
 echo -e "You can now use the following commands:"
