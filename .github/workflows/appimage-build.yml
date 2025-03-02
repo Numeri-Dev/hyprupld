@@ -43,6 +43,10 @@ jobs:
           cd release_package
           zip -r ../hypr_installer.zip *
 
+      - name: Get short SHA
+        id: slug
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Generate Changelog
         id: changelog
         run: |
@@ -60,8 +64,8 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.sha }}
-          name: ${{ github.sha }}
+          tag_name: release-${{ steps.slug.outputs.sha_short }}
+          name: Release ${{ steps.slug.outputs.sha_short }}
           draft: false
           prerelease: false
           files: |
