@@ -42,9 +42,9 @@ Builds are automatically generated from the latest commit
 The install script is used to install the scripts to your system  
 It will install them to /usr/local/bin  
 It will also make the scripts executable and ensure they're in your PATH  
-You can either download the repo or the zip for this  
+You can either download the repo and compile or download the zip for this  
 Run `bash install_scripts.sh` to begin the installation process  
-
+> Run `bash compile.sh` to compile the scripts  
 # Supported Package Managers  
 ### These are all the common package managers  
 - Pacman  
