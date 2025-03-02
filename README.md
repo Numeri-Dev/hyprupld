@@ -31,6 +31,13 @@ nest.rip.sh - for nest.rip
 pixelvault.co.sh - for pixelvault.co  
 hyprupld.sh - for testing  
 
+# AppImage Use  
+These are considered experimental currently  
+They should run the exact same as the scripts  
+AppImages are found in the Releases section  
+You can compile them yourself with the compile.sh script  
+Builds are automatically generated from the latest commit  
+
 # Supported Package Managers  
 ### These are all the common package managers  
 - Pacman  

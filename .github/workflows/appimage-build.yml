@@ -1,0 +1,42 @@
+name: Build AppImages and Release
+
+on:
+  push:
+    paths:
+      - 'Scripts/**'
+      - 'HyprUpld.png'
+      - 'compile.sh'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget fuse build-essential cmake libglib2.0-dev libcairo2-dev libpango1.0-dev imagemagick
+
+      - name: Make compile script executable
+        run: chmod +x compile.sh
+
+      - name: Run AppImage build script
+        run: ./compile.sh
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: release-${{ github.sha }}
+          name: AppImage Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+          files: Compiled/*.AppImage
+          body: |
+            Automated AppImage build from commit ${{ github.sha }}
+            
+            This release contains AppImages built from the scripts in the Scripts directory.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
