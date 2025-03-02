@@ -7,6 +7,9 @@ on:
       - 'HyprUpld.png'
       - 'compile.sh'
 
+permissions:
+  contents: write  # This is needed for creating releases
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
