@@ -7,6 +7,7 @@ on:
       - 'Scripts/**'
       - 'HyprUpld.png'
       - 'compile.sh'
+      - 'install_scripts.sh'  # Add this to trigger on changes to install script
 
 permissions:
   contents: write  # This is needed for creating releases
@@ -17,30 +18,64 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for changelog generation
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget fuse build-essential cmake libglib2.0-dev libcairo2-dev libpango1.0-dev imagemagick
+          sudo apt-get install -y wget fuse build-essential cmake libglib2.0-dev libcairo2-dev libpango1.0-dev imagemagick zip
 
-      - name: Make compile script executable
-        run: chmod +x compile.sh
+      - name: Make scripts executable
+        run: |
+          chmod +x compile.sh
+          chmod +x install_scripts.sh
 
       - name: Run AppImage build script
         run: ./compile.sh
+
+      - name: Create installation package
+        run: |
+          mkdir -p release_package
+          cp Compiled/*.AppImage release_package/
+          cp install_scripts.sh release_package/
+          cp -r Scripts/ release_package/
+          cd release_package
+          zip -r ../hypr_installer.zip *
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 --always HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "changelog=Initial release" >> $GITHUB_OUTPUT
+          else
+            CHANGES=$(git log --pretty=format:"* %s (%h)" $PREVIOUS_TAG..HEAD)
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: release-${{ github.sha }}
-          name: AppImage Release ${{ github.sha }}
+          tag_name: ${{ github.sha }}
+          name: ${{ github.sha }}
           draft: false
           prerelease: false
-          files: Compiled/*.AppImage
+          files: |
+            Compiled/*.AppImage
+            Scripts/*.sh
+            install_scripts.sh
+            hypr_installer.zip
           body: |
-            Automated AppImage build from commit ${{ github.sha }}
+            ${{ steps.changelog.outputs.changelog }}
             
-            This release contains AppImages built from the scripts in the Scripts directory.
+            This release contains:
+            - Individual AppImages in the Compiled directory
+            - Individual script files from the Scripts directory
+            - The main installation script (install_scripts.sh)
+            - A complete installation package (hypr_installer.zip) containing all of the above
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
