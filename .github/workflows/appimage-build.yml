@@ -71,7 +71,6 @@ jobs:
           files: |
             Compiled/*.AppImage
             Scripts/*.sh
-            install_scripts.sh
             hypr_installer.zip
           body: |
             ${{ steps.changelog.outputs.changelog }}
@@ -79,7 +78,6 @@ jobs:
             This release contains:
             - Individual AppImages in the Compiled directory
             - Individual script files from the Scripts directory
-            - The main installation script (install_scripts.sh)
-            - A complete installation package (hypr_installer.zip) containing all of the above
+            - A complete installation package (hypr_installer.zip) containing all AppImages, scripts, and the installation script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
