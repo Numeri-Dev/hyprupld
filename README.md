@@ -38,6 +38,12 @@ AppImages are found in the Releases section
 You can compile them yourself with the compile.sh script  
 Builds are automatically generated from the latest commit  
 
+# Install Script  
+The install script is used to install the scripts to your system  
+It will install them to ~/.local/bin  
+It will also create a symlink in your PATH to the script  
+You will have to download the repo and run the script from there  
+
 # Supported Package Managers  
 ### These are all the common package managers  
 - Pacman  
