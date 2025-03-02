@@ -1,6 +1,7 @@
 name: Build AppImages and Release
 
 on:
+  workflow_dispatch:  # Add this to enable manual triggering
   push:
     paths:
       - 'Scripts/**'
