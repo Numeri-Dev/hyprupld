@@ -32,7 +32,7 @@ pixelvault.co.sh - for pixelvault.co
 hyprupld.sh - for testing  
 
 # AppImage Use  
-These are considered experimental currently  
+These are if you want to use the installer script  
 They should run the exact same as the scripts  
 AppImages are found in the Releases section  
 You can compile them yourself with the compile.sh script  
