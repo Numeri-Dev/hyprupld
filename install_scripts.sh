@@ -17,6 +17,36 @@
 # Script by PhoenixAceVFX
 # Licensed under GPL-2.0
 
+# Colors for terminal output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Function to print colored and formatted messages
+print_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_header() {
+    echo -e "\n${BOLD}${MAGENTA}$1${NC}\n"
+}
 
 # Directory containing the AppImage files
 SCRIPTS_DIR="$(realpath "$(dirname "$0")/Compiled")"
@@ -25,12 +55,22 @@ SCRIPTS_DIR="$(realpath "$(dirname "$0")/Compiled")"
 # Using ~/.local/bin which is commonly in PATH and doesn't require sudo
 INSTALL_DIR="$HOME/.local/bin"
 
+print_header "HyprUpld Installation Script"
+print_info "Script directory: $SCRIPTS_DIR"
+print_info "Installation directory: $INSTALL_DIR"
+
 # Create the install directory if it doesn't exist
-mkdir -p "$INSTALL_DIR"
+if [ ! -d "$INSTALL_DIR" ]; then
+    print_info "Creating installation directory $INSTALL_DIR..."
+    mkdir -p "$INSTALL_DIR"
+    print_success "Directory created successfully."
+else
+    print_info "Installation directory already exists."
+fi
 
 # Check if the Scripts directory exists
 if [ ! -d "$SCRIPTS_DIR" ]; then
-    echo "Error: Scripts directory not found at $SCRIPTS_DIR"
+    print_error "Scripts directory not found at $SCRIPTS_DIR"
     exit 1
 fi
 
@@ -40,13 +80,29 @@ create_link() {
     local target_name="$2"
     local target="$INSTALL_DIR/$target_name"
     
+    print_info "Processing ${CYAN}$(basename "$source")${NC}..."
+    
     # Make the AppImage executable if it's not already
-    chmod +x "$source"
+    if [ ! -x "$source" ]; then
+        print_info "Making executable: $source"
+        chmod +x "$source"
+    else
+        print_info "File is already executable."
+    fi
+    
+    # Check if link already exists
+    if [ -L "$target" ]; then
+        print_info "Updating existing link for $target_name"
+    else
+        print_info "Creating new link for $target_name"
+    fi
     
     # Create the symbolic link
     ln -sf "$source" "$target"
-    echo "Created link: $target_name -> $(basename "$source")"
+    print_success "Created link: ${BOLD}$target_name${NC} -> ${CYAN}$(basename "$source")${NC}"
 }
+
+print_header "Creating Symbolic Links"
 
 # Map of AppImage files to their simplified command names
 declare -A file_map
@@ -65,40 +121,45 @@ for file in "${!file_map[@]}"; do
     if [ -f "$source_file" ]; then
         create_link "$source_file" "${file_map[$file]}"
     else
-        echo "Warning: $file not found in $SCRIPTS_DIR"
+        print_warning "$file not found in $SCRIPTS_DIR"
     fi
 done
 
+print_header "Checking PATH Configuration"
+
 # Check if INSTALL_DIR is in PATH
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-    echo "Warning: $INSTALL_DIR is not in your PATH."
+    print_warning "$INSTALL_DIR is not in your PATH."
     
     # For Bash/Zsh users, show instructions
-    echo "For Bash users (add to ~/.bashrc):"
-    echo "export PATH=\"\$PATH:$INSTALL_DIR\""
+    echo -e "${YELLOW}For Bash users (add to ~/.bashrc):${NC}"
+    echo -e "  ${CYAN}export PATH=\"\$PATH:$INSTALL_DIR\"${NC}"
     echo ""
-    echo "For Zsh users (add to ~/.zshrc):"
-    echo "export PATH=\"\$PATH:$INSTALL_DIR\""
+    echo -e "${YELLOW}For Zsh users (add to ~/.zshrc):${NC}"
+    echo -e "  ${CYAN}export PATH=\"\$PATH:$INSTALL_DIR\"${NC}"
     echo ""
     
     # For Fish users, attempt to automatically add to PATH
     if command -v fish &>/dev/null; then
-        echo "Detected Fish shell. Attempting to add $INSTALL_DIR to your PATH..."
-        fish -c "set -U fish_user_paths \$fish_user_paths $INSTALL_DIR" && echo "Successfully added to Fish shell PATH!" || echo "Failed to add to Fish shell PATH. Please add manually."
+        print_info "Detected Fish shell. Attempting to add $INSTALL_DIR to your PATH..."
+        if fish -c "set -U fish_user_paths \$fish_user_paths $INSTALL_DIR"; then
+            print_success "Successfully added to Fish shell PATH!"
+        else
+            print_error "Failed to add to Fish shell PATH. Please add manually."
+        fi
     else
-        echo "For Fish users (add to ~/.config/fish/config.fish):"
-        echo "set -x PATH \$PATH $INSTALL_DIR"
+        echo -e "${YELLOW}For Fish users (add to ~/.config/fish/config.fish):${NC}"
+        echo -e "  ${CYAN}set -x PATH \$PATH $INSTALL_DIR${NC}"
         echo ""
-        echo "Or run this command for Fish shell:"
-        echo "fish -c \"set -U fish_user_paths \$fish_user_paths $INSTALL_DIR\""
+        echo -e "${YELLOW}Or run this command for Fish shell:${NC}"
+        echo -e "  ${CYAN}fish -c \"set -U fish_user_paths \$fish_user_paths $INSTALL_DIR\"${NC}"
     fi
+else
+    print_success "$INSTALL_DIR is already in your PATH."
 fi
 
-echo "Installation complete!" 
-echo "You can now use the following commands:"
-echo "hyprupld-clipboard"
-echo "hyprupld-ez"
-echo "hyprupld-fakecrime"
-echo "hyprupld-guns"
-echo "hyprupld-nest"
-echo "hyprupld-pixelvault"
+print_header "Installation Complete!"
+echo -e "You can now use the following commands:"
+for cmd in "${file_map[@]}"; do
+    echo -e "  ${GREEN}${BOLD}$cmd${NC}"
+done
