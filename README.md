@@ -1,17 +1,17 @@
+<div align="center">
+
 ![Arch](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff&style=for-the-badge)
 ![Bash Script](https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![PyCharm](https://img.shields.io/badge/pycharm-143?style=for-the-badge&logo=pycharm&logoColor=black&color=black&labelColor=green)
 ![Neovim](https://img.shields.io/badge/NeoVim-%2357A143.svg?&style=for-the-badge&logo=neovim&logoColor=white)
 
-`# ▗▖ ▗▖▄   ▄ ▄▄▄▄   ▄▄▄ ▗▖ ▗▖▄▄▄▄  █    ▐▌`  
-`# ▐▌ ▐▌█   █ █   █ █    ▐▌ ▐▌█   █ █    ▐▌`  
-`# ▐▛▀▜▌ ▀▀▀█ █▄▄▄▀ █    ▐▌ ▐▌█▄▄▄▀ █ ▗▞▀▜▌`  
-`# ▐▌ ▐▌▄   █ █          ▝▚▄▞▘█     █ ▝▚▄▟▌`  
-`#       ▀▀▀  ▀               ▀            `  
+![HyprUpld](Banner.png)
 `# Script by PhoenixAceVFX`  
 `# Licensed under GPL-2.0`  
 Complex scripts that have a wide spectrum of support for image uploading  
 Issues can be used to request more support or to report issues/bugs  
+
+</div>
 
 # IMPORTANT SETUP  
 Run the script from your COMMAND LINE first  
