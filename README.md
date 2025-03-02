@@ -40,9 +40,10 @@ Builds are automatically generated from the latest commit
 
 # Install Script  
 The install script is used to install the scripts to your system  
-It will install them to ~/.local/bin  
-It will also create a symlink in your PATH to the script  
-You will have to download the repo and run the script from there  
+It will install them to /usr/local/bin  
+It will also make the scripts executable and ensure they're in your PATH  
+You can either download the repo or the zip for this  
+Run `bash install_scripts.sh` to begin the installation process  
 
 # Supported Package Managers  
 ### These are all the common package managers  
