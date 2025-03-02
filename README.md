@@ -26,6 +26,7 @@ If you want to keybind this remember to do `chmod +x` to it!!
 # SCRIPT USE  
 clipboard.sh - copies to clipboard  
 guns.lol.sh - for guns.lol  
+fakecri.me.sh - for fakecri.me
 e-z.gg.sh - for e-z.gg  
 nest.rip.sh - for nest.rip  
 pixelvault.co.sh - for pixelvault.co  
