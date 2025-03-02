@@ -36,8 +36,8 @@ jobs:
 
       - name: Create installation package
         run: |
-          mkdir -p release_package
-          cp Compiled/*.AppImage release_package/
+          mkdir -p release_package/Compiled
+          cp Compiled/*.AppImage release_package/Compiled/
           cp install_scripts.sh release_package/
           cp -r Scripts/ release_package/
           cd release_package
