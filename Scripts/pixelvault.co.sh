@@ -311,7 +311,8 @@ fi
 
 # Copy URL to clipboard
 log_step "Processing response and copying URL to clipboard"
-cat /tmp/upload.json | jq -r ".resource" | xclip -sel c
+# Remove any trailing newlines before copying to clipboard
+cat /tmp/upload.json | jq -r ".resource" | tr -d '\n' | xclip -sel c
 
 # Get the clipboard contents
 clipboard_content=$(xclip -selection clipboard -o)
