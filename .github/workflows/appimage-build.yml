@@ -34,6 +34,11 @@ jobs:
       - name: Run AppImage build script
         run: ./compile.sh
 
+      - name: Make AppImages and scripts executable
+        run: |
+          chmod +x Compiled/*.AppImage
+          chmod +x Scripts/*.sh
+
       - name: Create installation package
         run: |
           mkdir -p release_package/Compiled
