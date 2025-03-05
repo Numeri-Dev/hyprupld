@@ -87,6 +87,12 @@ while [[ $# -gt 0 ]]; do
             auth_header="Authorization"
             shift
             ;;
+        -atumsworld)
+            url="https://atums.world/api/upload"
+            service="atumsworld"
+            auth_header="authorization"
+            shift
+            ;;
         -h|--help)
             echo "Usage: $(basename "$0") [OPTIONS]"
             echo "Options:"
@@ -98,6 +104,7 @@ while [[ $# -gt 0 ]]; do
             echo "  -fakecrime       Use fakecri.me"
             echo "  -nest            Use nest.rip"
             echo "  -pixelvault      Use pixelvault.co"
+            echo "  -atumsworld      Use atums.world"
             exit 0
             ;;
         *)
@@ -464,6 +471,7 @@ if [[ -n "$service" ]]; then
             "nest") json_key=".fileURL" ;;
             "guns") json_key=".link" ;;
             "ez") json_key=".imageUrl" ;;
+            "atumsworld") json_key=".files[0].url" ;;
             *) json_key=".resource" ;;  # Default fallback
         esac
         cat "$response_file" | jq -r "$json_key" | tr -d '\n' | xclip -sel c
