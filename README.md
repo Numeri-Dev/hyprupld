@@ -18,7 +18,7 @@ A versatile screenshot and file upload utility for Linux with multi-platform sup
 
 One-line installation:
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
 ```
 
 > **Note**: If downloading manually from the releases page, remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
