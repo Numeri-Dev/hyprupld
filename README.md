@@ -13,6 +13,11 @@ Issues can be used to request more support or to report issues/bugs
 
 </div>
 
+# FAST INSTALL  
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
+```
+
 # REMEMBER TO CHMOD!!!  
 If you want to keybind this remember to do `chmod +x` to it!!  
 
