@@ -1,84 +1,128 @@
 <div align="center">
 
+![HyprUpld](Banner.png)
+
+# HyprUpld
+
+A versatile screenshot and file upload utility for Linux with multi-platform support
+
 ![Arch](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff&style=for-the-badge)
 ![Bash Script](https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
-![PyCharm](https://img.shields.io/badge/pycharm-143?style=for-the-badge&logo=pycharm&logoColor=black&color=black&labelColor=green)
 ![Neovim](https://img.shields.io/badge/NeoVim-%2357A143.svg?&style=for-the-badge&logo=neovim&logoColor=white)
 
-![HyprUpld](Banner.png)
-`# Script by PhoenixAceVFX`  
-`# Licensed under GPL-2.0`  
-Complex scripts that have a wide spectrum of support for image uploading  
-Issues can be used to request more support or to report issues/bugs  
+`Licensed under GPL-2.0`
 
 </div>
 
-# FAST INSTALL  
+## Quick Start
+
+One-line installation:
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
 ```
 
-# REMEMBER TO CHMOD!!!  
-If you want to keybind this remember to do `chmod +x` to it!!  
+> **Note**: If downloading manually from the releases page, remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
 
-# SCRIPT USE  
-* Service Selection:
-  * `-atumsworld`: Use atums.world 
-  * `-ez`: Use e-z.host
-  * `-fakecrime`: Use fakecri.me
-  * `-guns`: Use guns.lol
-  * `-nest`: Use nest.rip
-  * `-pixelvault`: Use pixelvault.co
-  * If no service is selected, the file will be copied to clipboard
-* Other Options:
-  * `-h, --help`: Show this help message
-  * `-reset`: Reset all settings and start fresh
-  * `-u, --url URL`: Set a custom upload URL
+## Features
 
-# AppImage Use  
-These are if you want to use the installer script  
-They should run the exact same as the scripts  
-AppImages are found in the Releases section  
-You can compile them yourself with the compile.sh script  
-Builds are automatically generated from the latest commit  
+### Upload Services
+- atums.world
+- e-z.host
+- fakecri.me
+- guns.lol
+- nest.rip
+- pixelvault.co
+- Custom URL support (see [wiki](../../wiki) for instructions)
 
-# Install Script  
-The install script is used to install the scripts to your system  
-It will install them to /usr/local/bin  
-It will also make the scripts executable and ensure they're in your PATH  
-You can either download the repo and compile or download the zip for this  
-Run `bash install_scripts.sh` to begin the installation process  
-> Run `bash compile.sh` to compile the scripts  
-# Supported Package Managers  
-### These are all the common package managers  
-- Pacman  
-- Apt  
-- DNF  
-- Nix-Env  
-- Emerge  
-- Zypper  
-- XBPS-Install  
-- Yay  
-- Paru  
+### Command Line Options
+```
+Usage: hyprupld [OPTIONS]
 
-# Supported Desktop Environment  
-- KDE Plasma  
-- Hyprland  
-- Gnome  
-- XFCE  
-- I3  
-- Deepin  
-- Cinnamon  
-- Openbox  
-- MATE  
-- Sway  
+Options:
+  -atumsworld    Use atums.world
+  -ez            Use e-z.host
+  -fakecrime     Use fakecri.me
+  -guns          Use guns.lol
+  -nest          Use nest.rip
+  -pixelvault    Use pixelvault.co
+  -h, --help     Show this help message
+  -reset         Reset all settings
+  -u, --url URL  Set custom upload URL
 
-# Custom URL Support  
-Manually done but instrctions can be found on the wiki!  
+Note: If no service is selected, the file will be copied to clipboard
+```
 
-# Credits
-This script relies on the following tools:
+## Desktop Environment Support
+
+HyprUpld works seamlessly with:
+- KDE Plasma
+- Hyprland
+- GNOME
+- XFCE
+- i3
+- Deepin
+- Cinnamon
+- Openbox
+- MATE
+- Sway
+
+## Package Manager Support
+
+Installation is supported on systems using:
+- Pacman (Arch)
+- Apt (Debian/Ubuntu)
+- DNF (Fedora)
+- Nix-Env (NixOS)
+- Emerge (Gentoo)
+- Zypper (openSUSE)
+- XBPS (Void)
+- AUR Helpers (Yay/Paru)
+
+## AppImage Support
+
+- Pre-built AppImages are available in the [Releases](../../releases) section
+- Can be compiled using the included `compile.sh` script
+- Automatic builds generated from the latest commit
+- Functionally identical to the standard scripts
+
+## Installation
+
+The `install.sh` script:
+- Places executables in `/usr/local/bin`
+- Sets appropriate permissions
+- Verifies PATH configuration
+- Handles dependency installation
+
+To install:
+1. Clone the repository or download the release package
+2. Run `bash install_scripts.sh`
+3. (Optional) Run `bash compile.sh` to build from source
+
+## Dependencies
+
+### Core Tools
 * [curl](https://github.com/curl/curl) - Command line tool for transferring data
 * [xclip](https://github.com/astrand/xclip) - Command line interface to X selections (clipboard)
 * [fyi](https://github.com/Macchina-CLI/fyi) - Minimal desktop notifications
 * [zenity](https://gitlab.gnome.org/GNOME/zenity) - Display graphical dialog boxes from shell scripts
+* [jq](https://github.com/stedolan/jq) - Lightweight command-line JSON processor
+* [grimblast](https://github.com/hyprwm/contrib) - Screenshot utility for Hyprland
+
+### Screenshot Tools
+* [grimblast](https://github.com/hyprwm/contrib) - For Hyprland
+* [spectacle](https://github.com/KDE/spectacle) - For KDE Plasma
+* [gnome-screenshot](https://gitlab.gnome.org/GNOME/gnome-screenshot) - For GNOME
+* [xfce4-screenshooter](https://docs.xfce.org/apps/xfce4-screenshooter/start) - For XFCE
+* [scrot](https://github.com/resurrecting-open-source-projects/scrot) - For i3, Openbox, and other minimal WMs
+* [deepin-screenshot](https://github.com/linuxdeepin/deepin-screenshot) - For Deepin
+* [mate-screenshot](https://github.com/mate-desktop/mate-utils) - For MATE
+* [grim](https://github.com/emersion/grim) - For Sway
+
+## Issues and Support
+Please use the [Issues](../../issues) section to:
+- Report bugs
+- Request new features
+- Request additional upload service support
+
+---
+Created by PhoenixAceVFX
