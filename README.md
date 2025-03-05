@@ -23,6 +23,7 @@ If you want to keybind this remember to do `chmod +x` to it!!
 
 # SCRIPT USE  
 * Service Selection:
+  * `-atumsworld`: Use atums.world 
   * `-ez`: Use e-z.host
   * `-fakecrime`: Use fakecri.me
   * `-guns`: Use guns.lol
