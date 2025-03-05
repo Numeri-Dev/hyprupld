@@ -13,24 +13,21 @@ Issues can be used to request more support or to report issues/bugs
 
 </div>
 
-# IMPORTANT SETUP  
-Run the script from your COMMAND LINE first  
-- Also do this if it does nothing, it needs to install deps over CLI  
-
-# Launch Arguments  
-To change your settings or your auth/api key run the script with `-c`  
-
 # REMEMBER TO CHMOD!!!  
 If you want to keybind this remember to do `chmod +x` to it!!  
 
 # SCRIPT USE  
-clipboard.sh - copies to clipboard  
-guns.lol.sh - for guns.lol  
-fakecri.me.sh - for fakecri.me
-e-z.gg.sh - for e-z.gg  
-nest.rip.sh - for nest.rip  
-pixelvault.co.sh - for pixelvault.co  
-hyprupld.sh - for testing  
+* Service Selection:
+  * `-ez`: Use e-z.host
+  * `-fakecrime`: Use fakecri.me
+  * `-guns`: Use guns.lol
+  * `-nest`: Use nest.rip
+  * `-pixelvault`: Use pixelvault.co
+  * If no service is selected, the file will be copied to clipboard
+* Other Options:
+  * `-h, --help`: Show this help message
+  * `-reset`: Reset all settings and start fresh
+  * `-u, --url URL`: Set a custom upload URL
 
 # AppImage Use  
 These are if you want to use the installer script  
@@ -72,3 +69,10 @@ Run `bash install_scripts.sh` to begin the installation process
 
 # Custom URL Support  
 Manually done but instrctions can be found on the wiki!  
+
+# Credits
+This script relies on the following tools:
+* [curl](https://github.com/curl/curl) - Command line tool for transferring data
+* [xclip](https://github.com/astrand/xclip) - Command line interface to X selections (clipboard)
+* [fyi](https://github.com/Macchina-CLI/fyi) - Minimal desktop notifications
+* [zenity](https://gitlab.gnome.org/GNOME/zenity) - Display graphical dialog boxes from shell scripts

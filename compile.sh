@@ -201,6 +201,12 @@ fi
 log_verbose "Scanning Scripts directory for files to process"
 SCRIPT_COUNT=0
 for script in "$SCRIPTS_DIR"/*; do
+  # Skip files in the Archive directory
+  if [[ "$script" == *"/Archive/"* ]]; then
+    log_verbose "Skipping archived script: $script"
+    continue
+  fi
+  
   if [ -f "$script" ]; then
     SCRIPT_COUNT=$((SCRIPT_COUNT+1))
     SCRIPT_NAME=$(basename "$script")
