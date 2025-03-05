@@ -1,2 +1,8 @@
 appimage_build/
 Compiled/
+# makepkg generated directories and files
+pkg/
+src/
+*.pkg.tar.zst
+*.tar.gz
+*.tar.xz
