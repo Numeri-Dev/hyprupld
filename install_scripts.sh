@@ -73,6 +73,9 @@ install_script() {
         # Create destination directory if it doesn't exist
         mkdir -p "$(dirname "$INSTALL_DIR/$dest_name")"
         
+        # Remove -x86_64 suffix if present
+        dest_name="${dest_name%-x86_64}"
+        
         # Copy the script and make it executable
         cp "$script" "$INSTALL_DIR/$dest_name"
         chmod 755 "$INSTALL_DIR/$dest_name"
@@ -85,6 +88,7 @@ install_script() {
 
 # Install all scripts from the Compiled directory
 print_header "Installing scripts..."
+installed_commands=()  # Array to store installed commands
 
 for script in "$SCRIPTS_DIR"/*; do
     if [ -f "$script" ]; then
@@ -93,10 +97,24 @@ for script in "$SCRIPTS_DIR"/*; do
         dest_name="${base_name%.AppImage}"
         # Remove .sh extension if present
         dest_name="${dest_name%.sh}"
+        # Remove -x86_64 if present
+        dest_name="${dest_name%-x86_64}"
         
-        install_script "$script" "$dest_name"
+        if install_script "$script" "$dest_name"; then
+            installed_commands+=("$dest_name")
+        fi
     fi
 done
 
 print_header "Installation Complete!"
 print_info "Scripts have been installed to $INSTALL_DIR"
+
+# List newly installed commands
+if [ ${#installed_commands[@]} -gt 0 ]; then
+    print_header "Newly Available Commands:"
+    for cmd in "${installed_commands[@]}"; do
+        echo -e "${CYAN}$cmd${NC}"
+    done
+fi
+
+echo  # Add empty line for better formatting
