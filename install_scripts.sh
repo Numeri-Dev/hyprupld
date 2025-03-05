@@ -119,12 +119,7 @@ print_header "Creating Symbolic Links"
 
 # Map of AppImage files to their simplified command names
 declare -A file_map
-file_map["clipboard-x86_64.AppImage"]="hyprupld-clipboard"
-file_map["e-z.gg-x86_64.AppImage"]="hyprupld-ez"
-file_map["fakecri.me-x86_64.AppImage"]="hyprupld-fakecrime"
-file_map["guns.lol-x86_64.AppImage"]="hyprupld-guns"
-file_map["nest.rip-x86_64.AppImage"]="hyprupld-nest"
-file_map["pixelvault.co-x86_64.AppImage"]="hyprupld-pixelvault"
+file_map["hyprupld-x86_64.AppImage"]="hyprupld"
 # Add more mappings here as needed
 # file_map["another-app-x86_64.AppImage"]="simple-name"
 
