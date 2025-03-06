@@ -95,8 +95,8 @@ The `install.sh` script:
 
 To install:
 1. Clone the repository or download the release package
-2. Run `bash install_scripts.sh`
-3. (Optional) Run `bash compile.sh` to build from source
+2. Run `bash compile.sh` to build from source
+3. Run `bash install_scripts.sh`
 
 ## Dependencies
 
