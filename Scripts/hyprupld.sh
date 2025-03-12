@@ -1,6 +1,6 @@
 #!/bin/bash
 #==============================================================================
-# hyprupld.sh - Screenshot and Upload Utility
+# hyprupld - Screenshot and Upload Utility
 #==============================================================================
 # This script provides a flexible screenshot capture and upload solution
 # supporting multiple desktop environments and upload services.
@@ -376,7 +376,7 @@ display_help() {
     cat << EOF
 hyprupld - Screenshot and Upload Utility
 
-Usage: $(basename "$0") [OPTIONS]
+Usage: hyprupld [OPTIONS]
 
 Options:
   -h, --help       Show this help message
@@ -398,9 +398,9 @@ Environment Variables:
   HYPRUPLD_DEBUG   Enable debug output when set to 1
 
 Examples:
-  $(basename "$0") -guns              # Take screenshot and upload to guns.lol
-  $(basename "$0")                    # Take screenshot and copy to clipboard
-  $(basename "$0") -u https://example.com/upload  # Use custom upload URL
+  hyprupld -guns              # Take screenshot and upload to guns.lol
+  hyprupld                    # Take screenshot and copy to clipboard
+  hyprupld -u https://example.com/upload  # Use custom upload URL
 
 For more information and updates, visit:
 https://github.com/PhoenixAceVFX/hyprupld
