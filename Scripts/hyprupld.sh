@@ -48,7 +48,11 @@ declare -A SERVICES=(
     ["atumsworld"]="https://atums.world/api/upload|authorization"
 )
 
-# Define logging functions first
+#==============================================================================
+# Function Definitions
+#==============================================================================
+
+# 1. Logging Functions
 log_info() {
     echo -e "${COLOR_BLUE}[INFO]${COLOR_RESET} $1"
 }
@@ -69,10 +73,7 @@ log_step() {
     echo -e "${COLOR_CYAN}[STEP]${COLOR_RESET} $1"
 }
 
-# Error handling and cleanup
-trap cleanup_on_error ERR
-trap cleanup_on_exit EXIT
-
+# 2. Cleanup Functions
 cleanup_on_error() {
     local err=$?
     log_error "An error occurred (Exit code: $err)"
@@ -96,7 +97,7 @@ cleanup_files() {
     fi
 }
 
-# Configuration management
+# 3. Configuration Functions
 ensure_config_dir() {
     if [[ ! -d "$CONFIG_DIR" ]]; then
         mkdir -p "$CONFIG_DIR"
@@ -123,7 +124,29 @@ backup_and_reset_config() {
     log_info "Created new settings file"
 }
 
-# System check functions
+get_saved_value() {
+    local key="$1"
+    if [[ -f "$SETTINGS_FILE" ]]; then
+        jq -r ".[\"$key\"] // empty" "$SETTINGS_FILE"
+    fi
+}
+
+save_value() {
+    local key="$1"
+    local value="$2"
+    local temp_file
+    temp_file=$(mktemp)
+    
+    if [[ -f "$SETTINGS_FILE" ]]; then
+        jq --arg key "$key" --arg value "$value" '.[$key] = $value' "$SETTINGS_FILE" > "$temp_file"
+    else
+        jq --arg key "$key" --arg value "$value" '{($key): $value}' <<< '{}' > "$temp_file"
+    fi
+    
+    mv "$temp_file" "$SETTINGS_FILE"
+}
+
+# 4. System Check Functions
 check_system_requirements() {
     check_display_server
     check_basic_dependencies
@@ -152,7 +175,7 @@ check_basic_dependencies() {
     fi
 }
 
-# Package management functions
+# 5. Package Management Functions
 detect_package_managers() {
     log_step "Detecting package managers..."
     declare -a managers=("pacman" "apt-get" "dnf" "nix-env" "emerge" "zypper" "xbps-install" "yay" "paru")
@@ -191,7 +214,6 @@ get_package_managers() {
     fi
 }
 
-# Dependency management functions
 check_dependencies() {
     log_step "Checking for required tools"
     local required_packages=("zenity" "jq" "xclip" "fyi")
@@ -305,7 +327,7 @@ attempt_package_installation() {
     return 1
 }
 
-# Parse command line arguments
+# 6. Argument Parsing Functions
 parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -407,7 +429,7 @@ https://github.com/PhoenixAceVFX/hyprupld
 EOF
 }
 
-# Screenshot functions
+# 7. Screenshot Functions
 take_screenshot() {
     log_step "Taking screenshot based on desktop environment: $desktop_env"
     
@@ -537,7 +559,7 @@ verify_screenshot() {
     return 0
 }
 
-# Upload functions
+# 8. Upload Functions
 handle_upload() {
     if [[ -n "$service" ]]; then
         upload_screenshot
@@ -652,44 +674,7 @@ copy_url_to_clipboard() {
     fyi "Image URL copied to clipboard: $clipboard_content"
 }
 
-# Initialize script
-initialize_script() {
-    check_system_requirements
-    ensure_config_dir
-    validate_config
-    
-    # Detect distribution and desktop environment
-    distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
-    desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
-    
-    log_info "Detected distribution: $distro"
-    log_info "Detected desktop environment: $desktop_env"
-    
-    check_dependencies
-}
-
-# Main execution
-main() {
-    initialize_script
-    parse_arguments "$@"
-    
-    if [[ -n "$service" ]]; then
-        get_authentication "$service" || exit 1
-    fi
-    
-    take_screenshot || exit 1
-    handle_upload || exit 1
-    
-    log_success "Operation completed successfully"
-    return 0
-}
-
-# Execute main function if script is run directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
-
-# Authentication functions
+# 9. Authentication Functions
 get_authentication() {
     local service="$1"
     log_step "Retrieving authentication key for $service"
@@ -706,4 +691,49 @@ get_authentication() {
         log_info "Using saved auth key for $service"
     fi
 }
+
+# 10. Initialization Functions
+initialize_script() {
+    check_system_requirements
+    ensure_config_dir
+    validate_config
+    
+    # Detect distribution and desktop environment
+    distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
+    desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
+    
+    log_info "Detected distribution: $distro"
+    log_info "Detected desktop environment: $desktop_env"
+    
+    check_dependencies
+}
+
+# 11. Main Function
+main() {
+    initialize_script
+    parse_arguments "$@"
+    
+    if [[ -n "$service" ]]; then
+        get_authentication "$service" || exit 1
+    fi
+    
+    take_screenshot || exit 1
+    handle_upload || exit 1
+    
+    log_success "Operation completed successfully"
+    return 0
+}
+
+#==============================================================================
+# Script Execution
+#==============================================================================
+
+# Set up error handling
+trap cleanup_on_error ERR
+trap cleanup_on_exit EXIT
+
+# Execute main function if script is run directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
 
