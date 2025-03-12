@@ -1,136 +1,130 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#==============================================================================
+# HyprUpld Installation Script
+# Author: PhoenixAceVFX
+# License: GPL-2.0
+# Description: Installs HyprUpld and related tools to the system
+#==============================================================================
+# Exit on any error
+set -e
 
-# ░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░▒▓███████▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░       ░▒▓█▓▒▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓███████▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓██████▓▒░ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░      ░▒▓██████▓▒░  ░▒▓█▓▒▒▓█▓▒░░▒▓██████▓▒░  ░▒▓██████▓▒░
-# ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░        ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░        ░▒▓█▓▓█▓▒░ ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓████████▓▒░  ░▒▓██▓▒░  ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓███████▓▒░░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓███████▓▒░░▒▓█▓▒░      ░▒▓███████▓▒░
-# ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓████████▓▒░░▒▓██████▓▒░░▒▓███████▓▒░░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓███████▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░   ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░   ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░
-# ░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░   ░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░▒▓███████▓▒░
-# Script by PhoenixAceVFX
-# Licensed under GPL-2.0
-
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-BOLD='\033[1m'
-
-# Helper functions
-print_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-print_header() {
-    echo -e "\n${BOLD}${MAGENTA}$1${NC}\n"
-}
-
-# Directory containing the compiled files
+#==============================================================================
+# Configuration
+#==============================================================================
 SCRIPTS_DIR="$(realpath "$(dirname "$0")/Compiled")"
-
-# Allow override of install directory (for packaging)
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
-# Function to check and request sudo privileges
-check_sudo() {
+#==============================================================================
+# Terminal Colors
+#==============================================================================
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[0;33m'
+readonly BLUE='\033[0;34m'
+readonly MAGENTA='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly NC='\033[0m'
+readonly BOLD='\033[1m'
+
+#==============================================================================
+# Logging Functions
+#==============================================================================
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+log_header() { echo -e "\n${BOLD}${MAGENTA}$1${NC}\n"; }
+
+#==============================================================================
+# Utility Functions
+#==============================================================================
+check_prerequisites() {
+    if [ ! -d "$SCRIPTS_DIR" ]; then
+        log_error "Scripts directory not found at $SCRIPTS_DIR"
+        exit 1
+    fi
+}
+
+ensure_root_privileges() {
     if [ "$EUID" -ne 0 ]; then
-        print_warning "This script requires administrative privileges to install to $INSTALL_DIR"
+        log_warning "Requesting administrative privileges..."
         if ! sudo -v; then
-            print_error "Failed to obtain administrative privileges"
+            log_error "Failed to obtain administrative privileges"
             exit 1
         fi
     fi
 }
 
-print_header "HyprUpld Installation Script"
-print_info "Script directory: $SCRIPTS_DIR"
-print_info "Installation directory: $INSTALL_DIR"
-
-# Check for sudo privileges
-check_sudo
-
-# Check if the Scripts directory exists
-if [ ! -d "$SCRIPTS_DIR" ]; then
-    print_error "Scripts directory not found at $SCRIPTS_DIR"
-    exit 1
-fi
-
-# Function to install a script
-install_script() {
-    local script="$1"
+#==============================================================================
+# Installation Functions
+#==============================================================================
+install_binary() {
+    local source_file="$1"
     local dest_name="$2"
     
-    if [ -f "$script" ]; then
-        # Create destination directory if it doesn't exist
-        sudo mkdir -p "$(dirname "$INSTALL_DIR/$dest_name")"
-        
-        print_info "Original name: $dest_name"
-        
-        # First remove -x86_64 suffix, then .AppImage extension
-        dest_name="${dest_name/-x86_64/}"
-        dest_name="${dest_name/.AppImage/}"
-        
-        print_info "Installing as: $dest_name"
-        
-        # Copy the script and make it executable using sudo
-        sudo cp "$script" "$INSTALL_DIR/$dest_name"
-        sudo chmod 755 "$INSTALL_DIR/$dest_name"
-        print_success "Installed $dest_name"
+    # Normalize binary name
+    dest_name="${dest_name/-x86_64/}"
+    dest_name="${dest_name/.AppImage/}"
+    
+    log_info "Installing: $dest_name"
+    
+    # Create destination directory if needed
+    sudo mkdir -p "$(dirname "$INSTALL_DIR/$dest_name")"
+    
+    # Install binary with appropriate permissions
+    if sudo cp "$source_file" "$INSTALL_DIR/$dest_name" && \
+       sudo chmod 755 "$INSTALL_DIR/$dest_name"; then
+        log_success "Installed $dest_name"
+        return 0
     else
-        print_error "Script not found: $script"
+        log_error "Failed to install $dest_name"
         return 1
     fi
 }
 
-# Install all scripts from the Compiled directory
-print_header "Installing scripts..."
-installed_commands=()  # Array to store installed commands
-
-for script in "$SCRIPTS_DIR"/*; do
-    if [ -f "$script" ]; then
-        base_name=$(basename "$script")
-        dest_name="$base_name"
-        
-        if install_script "$script" "$dest_name"; then
-            # Use the same pattern replacement for consistency
-            installed_commands+=("${dest_name/-x86_64/}")
-            installed_commands[-1]="${installed_commands[-1]/.AppImage/}"
+install_all_binaries() {
+    local installed_commands=()
+    
+    for binary in "$SCRIPTS_DIR"/*; do
+        if [ -f "$binary" ]; then
+            local base_name=$(basename "$binary")
+            if install_binary "$binary" "$base_name"; then
+                installed_commands+=("${base_name/-x86_64/}")
+                installed_commands[-1]="${installed_commands[-1]/.AppImage/}"
+            fi
         fi
-    fi
-done
-
-print_header "Installation Complete!"
-print_info "Scripts have been installed to $INSTALL_DIR"
-
-# List newly installed commands
-if [ ${#installed_commands[@]} -gt 0 ]; then
-    print_header "Newly Available Commands:"
-    for cmd in "${installed_commands[@]}"; do
-        echo -e "${CYAN}$cmd${NC}"
     done
-fi
+    
+    return_installed_commands "${installed_commands[@]}"
+}
 
-echo  # Add empty line for better formatting
+return_installed_commands() {
+    local -a commands=("$@")
+    
+    if [ ${#commands[@]} -gt 0 ]; then
+        log_header "Installed Commands:"
+        for cmd in "${commands[@]}"; do
+            echo -e "${CYAN}$cmd${NC}"
+        done
+    else
+        log_warning "No commands were installed"
+    fi
+}
+
+#==============================================================================
+# Main Installation Process
+#==============================================================================
+main() {
+    log_header "HyprUpld Installation"
+    log_info "Source directory: $SCRIPTS_DIR"
+    log_info "Target directory: $INSTALL_DIR"
+    
+    check_prerequisites
+    ensure_root_privileges
+    install_all_binaries
+    
+    log_header "Installation Complete"
+    echo
+}
+
+main "$@"
