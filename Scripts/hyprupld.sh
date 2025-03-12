@@ -37,6 +37,11 @@ service="" # Default Service
 auth_header="" # Default Header
 while [[ $# -gt 0 ]]; do
     case $1 in
+        -debug)
+            # Enable strict error handling and debug output
+            set -euox pipefail
+            shift
+            ;;
         -reset)
             if [[ -f "$settings_file" ]]; then
                 rm "$settings_file"
@@ -97,6 +102,7 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $(basename "$0") [OPTIONS]"
             echo "Options:"
             echo "  -h, --help       Show this help message"
+            echo "  -debug           Enable debug mode with strict error handling"
             echo "  -reset           Reset all settings and start fresh"
             echo "  -u, --url URL    Set a custom upload URL"
             echo "  -guns            Use guns.lol"
@@ -139,7 +145,8 @@ log_step() {
 get_saved_value() {
     local key="$1"
     if [[ -f "$settings_file" ]]; then
-        local value=$(jq -r ".[\"$key\"]" "$settings_file")
+        local value
+        value=$(jq -r ".[\"$key\"]" "$settings_file")
         if [[ "$value" != "null" ]]; then
             echo "$value"
         fi
@@ -199,12 +206,20 @@ get_package_managers() {
     fi
 }
 
-install_dependencies() {
-    required_packages=("$@")
-    missing_packages=()
+# Dependency management functions
+check_dependencies() {
+    log_step "Checking for required tools"
+    local required_packages=()
 
-    # Check for missing dependencies
-    log_step "Checking for required dependencies: ${required_packages[*]}"
+    # Set required packages based on distribution
+    if [[ -f "/etc/arch-release" ]]; then
+        required_packages=("zenity" "jq" "xclip" "fyi")
+    else
+        required_packages=("zenity" "jq" "xclip" "fyi")
+    fi
+
+    # Check for missing packages
+    local missing_packages=()
     for package in "${required_packages[@]}"; do
         if ! command -v "$package" &>/dev/null; then
             missing_packages+=("$package")
@@ -214,100 +229,129 @@ install_dependencies() {
         fi
     done
 
-    if [[ ${#missing_packages[@]} -eq 0 ]]; then
-        log_success "All dependencies are installed"
+    # Install missing packages if needed
+    if [[ ${#missing_packages[@]} -gt 0 ]]; then
+        install_missing_packages "${missing_packages[@]}"
+    else
+        log_success "All required packages are already installed"
+    fi
+}
+
+install_missing_packages() {
+    local missing_packages=("$@")
+    log_warning "Missing required packages. Installing: ${missing_packages[*]}"
+
+    # Handle non-terminal environment
+    if ! [ -t 0 ]; then
+        handle_gui_installation "${missing_packages[@]}"
         return
     fi
 
-    # Check if running in terminal
-    if ! [ -t 0 ]; then
-        # Not running in terminal, ask for authorization via zenity
-        if ! zenity --question --title="Package Installation" --text="This script needs to install the following packages:\n\n${missing_packages[*]}\n\nDo you want to proceed?" --width=300; then
-            log_error "User declined package installation"
-            exit 1
-        fi
-        
-        # Ask for sudo password via zenity
-        sudo_password=$(zenity --password --title="Authentication Required") || exit 1
-        export SUDO_ASKPASS="$(mktemp)"
-        echo '#!/bin/sh' > "$SUDO_ASKPASS"
-        echo "echo '$sudo_password'" >> "$SUDO_ASKPASS"
-        chmod +x "$SUDO_ASKPASS"
-        export SUDO_ASKPASS
-    fi
-
-    # Only proceed with package manager detection and installation if there are missing packages
-    package_managers=($(get_package_managers))
-    log_step "Installing missing packages: ${missing_packages[*]}"
-    
+    # Get package managers and attempt installation
+    mapfile -t package_managers < <(get_package_managers)
     for manager in "${package_managers[@]}"; do
-        log_info "Attempting to install with $manager"
-        case "$manager" in
-            "arch") 
-                log_info "Using pacman to install packages"
-                sudo pacman -S --noconfirm "${missing_packages[@]}" && log_success "Installation successful" && return ;;
-            "debian") 
-                log_info "Using apt-get to install packages"
-                sudo apt-get install -y "${missing_packages[@]}" && log_success "Installation successful" && return ;;
-            "fedora") 
-                log_info "Using dnf to install packages"
-                sudo dnf install -y "${missing_packages[@]}" && log_success "Installation successful" && return ;;
-            "nixos") 
-                log_info "Using nix-env to install packages"
-                sudo nix-env -iA nixpkgs."${missing_packages[@]}" && log_success "Installation successful" && return ;;
-            "gentoo") 
-                log_info "Using emerge to install packages"
-                sudo emerge --ask "${missing_packages[@]}" && log_success "Installation successful" && return ;;
-            "opensuse") 
-                log_info "Using zypper to install packages"
-                sudo zypper install -y "${missing_packages[@]}" && log_success "Installation successful" && return ;;
-            "void") 
-                log_info "Using xbps-install to install packages"
-                sudo xbps-install -y "${missing_packages[@]}" && log_success "Installation successful" && return ;;
-            "arch_community")
-                if command -v yay &>/dev/null; then
-                    log_info "Using yay to install packages"
-                    yay -S --noconfirm "${missing_packages[@]}" && log_success "Installation successful" && return
-                elif command -v paru &>/dev/null; then
-                    log_info "Using paru to install packages"
-                    paru -S --noconfirm "${missing_packages[@]}" && log_success "Installation successful" && return
-                fi
-                ;;
-        esac
+        if attempt_package_installation "$manager" "${missing_packages[@]}"; then
+            return 0
+        fi
     done
 
-    log_error "Could not install dependencies. Install the following manually: ${missing_packages[*]}"
+    log_error "Could not install dependencies. Install manually: ${missing_packages[*]}"
     exit 1
 }
 
-# Ensure Zenity, jq, and xclip are installed
-log_step "Checking for required tools"
-required_packages=()
-
-if [[ -f "/etc/arch-release" ]]; then
-    required_packages=("zenity" "jq" "xclip" "fyi")
-else
-    required_packages=("zenity" "jq" "xclip" "fyi")
-fi
-
-# Check if any dependencies are missing
-missing_packages=()
-for package in "${required_packages[@]}"; do
-    if ! command -v "$package" &>/dev/null; then
-        missing_packages+=("$package")
-        log_warning "Missing package: $package"
-    else
-        log_info "Found package: $package"
+handle_gui_installation() {
+    local missing_packages=("$@")
+    local askpass_script
+    
+    # Ask for installation confirmation
+    if ! zenity --question \
+        --title="Package Installation" \
+        --text="This script needs to install the following packages:\n\n${missing_packages[*]}\n\nDo you want to proceed?" \
+        --width=300; then
+        log_error "User declined package installation"
+        exit 1
     fi
-done
+    
+    # Get sudo password
+    local sudo_password
+    sudo_password=$(zenity --password --title="Authentication Required") || exit 1
+    askpass_script="$(mktemp)"
+    echo '#!/bin/sh' > "$askpass_script"
+    echo "echo '$sudo_password'" >> "$askpass_script"
+    chmod +x "$askpass_script"
+    export SUDO_ASKPASS="$askpass_script"
 
-# Only run install_dependencies if there are missing packages
-if [[ ${#missing_packages[@]} -gt 0 ]]; then
-    log_warning "Missing required packages. Installing: ${missing_packages[*]}"
-    install_dependencies "${missing_packages[@]}"
-else
-    log_success "All required packages are already installed"
-fi
+    # Clean up the temporary askpass script
+    trap 'rm -f "$askpass_script"' EXIT
+}
+
+attempt_package_installation() {
+    local manager="$1"
+    shift
+    local packages=("$@")
+    local exit_status
+    
+    log_info "Attempting to install with $manager"
+    case "$manager" in
+        "arch")
+            sudo -A pacman -S --noconfirm "${packages[@]}"
+            ;;
+        "debian")
+            sudo -A apt-get install -y "${packages[@]}"
+            ;;
+        "fedora")
+            sudo -A dnf install -y "${packages[@]}"
+            ;;
+        "nixos")
+            sudo -A nix-env -iA nixpkgs."${packages[@]}"
+            ;;
+        "gentoo")
+            sudo -A emerge --ask "${packages[@]}"
+            ;;
+        "opensuse")
+            sudo -A zypper install -y "${packages[@]}"
+            ;;
+        "void")
+            sudo -A xbps-install -y "${packages[@]}"
+            ;;
+        "arch_community")
+            if command -v yay &>/dev/null; then
+                yay -S --noconfirm "${packages[@]}"
+            elif command -v paru &>/dev/null; then
+                paru -S --noconfirm "${packages[@]}"
+            else
+                return 1
+            fi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    
+    exit_status=$?
+    if [ $exit_status -eq 0 ]; then
+        log_success "Installation successful"
+        return 0
+    fi
+    return 1
+}
+
+get_authentication() {
+    local service="$1"
+    log_step "Retrieving authentication key for $service"
+    
+    auth=$(get_saved_value "${service}_auth")
+    if [[ -z "$auth" ]]; then
+        log_info "No saved auth key found for $service, prompting user"
+        auth=$(zenity --entry \
+            --title="Authentication Key" \
+            --text="Enter your auth key for $service:" \
+            --width=500) || exit 1
+        save_value "${service}_auth" "$auth"
+    else
+        log_info "Using saved auth key for $service"
+    fi
+}
 
 # Detect distro and desktop environment
 distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
@@ -317,15 +361,7 @@ log_info "Detected desktop environment: $desktop_env"
 
 # Get auth key only if a service is specified
 if [[ -n "$service" ]]; then
-    log_step "Retrieving authentication key for $service"
-    auth=$(get_saved_value "${service}_auth")
-    if [[ -z "$auth" ]]; then
-        log_info "No saved auth key found for $service, prompting user"
-        auth=$(zenity --entry --title="Authentication Key" --text="Enter your auth key for $service:" --width=500) || exit 1
-        save_value "${service}_auth" "$auth"
-    else
-        log_info "Using saved auth key for $service"
-    fi
+    get_authentication "$service"
 fi
 
 # Handle screenshots based on the desktop environment
@@ -333,12 +369,12 @@ log_step "Taking screenshot based on desktop environment: $desktop_env"
 case "$desktop_env" in
     *"sway"*|*"hyprland"*|*"i3"*)
         log_info "Using grimblast for Wayland/i3 environment"
-        install_dependencies "grimblast"
+        check_dependencies
         grimblast save area "$temp_file"
         ;;
     *"kde"*)
         log_info "Detected KDE environment"
-        install_dependencies "flameshot" "spectacle"
+        check_dependencies
         tool=$(get_saved_value "kde_tool")
         if [[ -z "$tool" ]]; then
             log_info "No preferred screenshot tool saved, prompting user"
@@ -354,7 +390,7 @@ case "$desktop_env" in
         fi
         ;;
     *"xfce"*)
-        install_dependencies "xfce4-screenshooter" "flameshot"
+        check_dependencies
         tool=$(get_saved_value "xfce_tool")
         if [[ -z "$tool" ]]; then
             tool=$(zenity --list --radiolist --title="XFCE Screenshot Tool" --text="Choose your preferred screenshot tool:" --column="" --column="Tool" TRUE XFCE4-Screenshooter FALSE Flameshot --width=500 --height=316) || exit 1
@@ -367,7 +403,7 @@ case "$desktop_env" in
         fi
         ;;
     *"gnome"*)
-        install_dependencies "gnome-screenshot" "flameshot"
+        check_dependencies
         tool=$(get_saved_value "gnome_tool")
         if [[ -z "$tool" ]]; then
             tool=$(zenity --list --radiolist --title="GNOME Screenshot Tool" --text="Choose your preferred screenshot tool:" --column="" --column="Tool" TRUE GNOME-Screenshot FALSE Flameshot --width=500 --height=316) || exit 1
@@ -380,7 +416,7 @@ case "$desktop_env" in
         fi
         ;;
     *"cinnamon"*)
-        install_dependencies "gnome-screenshot" "flameshot"
+        check_dependencies
         tool=$(get_saved_value "cinnamon_tool")
         if [[ -z "$tool" ]]; then
             tool=$(zenity --list --radiolist --title="Cinnamon Screenshot Tool" --text="Choose your preferred screenshot tool:" --column="" --column="Tool" TRUE GNOME-Screenshot FALSE Flameshot --width=500 --height=316) || exit 1
@@ -393,11 +429,11 @@ case "$desktop_env" in
         fi
         ;;
     *"deepin"*)
-        install_dependencies "deepin-screenshot"
+        check_dependencies
         deepin-screenshot -s "$temp_file"
         ;;
     *"mate"*)
-        install_dependencies "mate-screenshot" "flameshot"
+        check_dependencies
         tool=$(get_saved_value "mate_tool")
         if [[ -z "$tool" ]]; then
             tool=$(zenity --list --radiolist --title="MATE Screenshot Tool" --text="Choose your preferred screenshot tool:" --column="" --column="Tool" TRUE MATE-Screenshot FALSE Flameshot --width=500 --height=316) || exit 1
