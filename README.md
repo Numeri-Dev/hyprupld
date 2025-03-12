@@ -2,40 +2,64 @@
 
 ![HyprUpld](Banner.png)
 
-# HyprUpld
-
-A versatile screenshot and file upload utility for Linux with multi-platform support
-
 ![Arch](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff&style=for-the-badge)
 ![Bash Script](https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![Neovim](https://img.shields.io/badge/NeoVim-%2357A143.svg?&style=for-the-badge&logo=neovim&logoColor=white)
 
-`Licensed under GPL-2.0`
+**A versatile screenshot and file upload utility for Linux with multi-platform support**
+
+[![License: GPL-2.0](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://github.com/PhoenixAceVFX/hyprupld/blob/main/LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/PhoenixAceVFX/hyprupld)](https://github.com/PhoenixAceVFX/hyprupld/releases)
 
 </div>
 
+---
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Features](#features)
+  - [Upload Services](#upload-services)
+  - [Command Line Options](#command-line-options)
+- [Desktop Environment Support](#desktop-environment-support)
+- [Package Manager Support](#package-manager-support)
+- [About](#about)
+- [Resources](#resources)
+- [License](#license)
+
+---
+
 ## Quick Start
 
-One-line installation:
+To install HyprUpld, execute the following one-line command in your terminal:
+
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
 ```
 
-> **Note**: If downloading manually from the releases page, remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
+> **Note:** If downloading manually from the [releases page](https://github.com/PhoenixAceVFX/hyprupld/releases), remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
+
+---
 
 ## Features
 
 ### Upload Services
-- atums.world
-- e-z.host
-- fakecri.me
-- guns.lol
-- nest.rip
-- pixelvault.co
-- Custom URL support (see [wiki](../../wiki) for instructions)
+
+HyprUpld supports uploading to multiple services:
+
+- [atums.world](https://atums.world)
+- [e-z.host](https://e-z.host)
+- [fakecri.me](https://fakecri.me)
+- [guns.lol](https://guns.lol)
+- [nest.rip](https://nest.rip)
+- [pixelvault.co](https://pixelvault.co)
+- **Custom URL support** (see [wiki](https://github.com/PhoenixAceVFX/hyprupld/wiki) for instructions)
 
 ### Command Line Options
-```
+
+HyprUpld offers various command-line options for flexibility:
+
+```bash
 Usage: hyprupld [OPTIONS]
 
 Options:
@@ -48,13 +72,16 @@ Options:
   -h, --help     Show this help message
   -reset         Reset all settings
   -u, --url URL  Set custom upload URL
-
-Note: If no service is selected, the file will be copied to clipboard
 ```
+
+> **Note:** If no service is selected, the file will be copied to the clipboard.
+
+---
 
 ## Desktop Environment Support
 
-HyprUpld works seamlessly with:
+HyprUpld works seamlessly with various desktop environments:
+
 - KDE Plasma
 - Hyprland
 - GNOME
@@ -66,9 +93,12 @@ HyprUpld works seamlessly with:
 - MATE
 - Sway
 
+---
+
 ## Package Manager Support
 
 Installation is supported on systems using:
+
 - Pacman (Arch)
 - Apt (Debian/Ubuntu)
 - DNF (Fedora)
@@ -77,6 +107,24 @@ Installation is supported on systems using:
 - Zypper (openSUSE)
 - XBPS (Void)
 - AUR Helpers (Yay/Paru)
+
+---
+
+## About
+
+HyprUpld is an all-in-one Linux screenshot tool designed to streamline the process of capturing and uploading screenshots across various platforms.
+
+For more information, visit the [official website](https://hyprupld.space).
+
+---
+
+## Resources
+
+- [Readme](https://github.com/PhoenixAceVFX/hyprupld/blob/main/README.md)
+- [Wiki](https://github.com/PhoenixAceVFX/hyprupld/wiki)
+- [Releases](https://github.com/PhoenixAceVFX/hyprupld/releases)
+
+---
 
 ## AppImage Support
 
@@ -125,4 +173,15 @@ Please use the [Issues](../../issues) section to:
 - Request additional upload service support
 
 ---
+
+## License
+
+This project is licensed under the [GPL-2.0 License](https://github.com/PhoenixAceVFX/hyprupld/blob/main/LICENSE).
+
+---
+
+*For any issues or contributions, please visit the [GitHub repository](https://github.com/PhoenixAceVFX/hyprupld).*
+
+--- 
+
 Created by PhoenixAceVFX
