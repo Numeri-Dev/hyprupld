@@ -48,6 +48,9 @@ declare -A SERVICES=(
     ["atumsworld"]="https://atums.world/api/upload|authorization"
 )
 
+# Add to the configuration section near other readonly variables
+readonly SAVE_DIR_SETTING="screenshot_save_directory"
+
 #==============================================================================
 # Function Definitions
 #==============================================================================
@@ -362,6 +365,10 @@ parse_arguments() {
                 print_version
                 exit 0
                 ;;
+            -s|--save)
+                handle_save_option
+                shift
+                ;;
             -*)
                 local service_name="${1#-}"
                 if [[ -n "${SERVICES[$service_name]:-}" ]]; then
@@ -405,6 +412,79 @@ handle_custom_url() {
     fi
 }
 
+handle_save_option() {
+    save_enabled=true
+    save_directory=$(get_save_directory)
+}
+
+get_save_directory() {
+    local dir
+    dir=$(get_saved_value "$SAVE_DIR_SETTING")
+    
+    if [[ -z "$dir" ]]; then
+        log_info "No saved screenshot directory found, prompting user"
+        local base_dir
+        base_dir=$(zenity --file-selection \
+            --directory \
+            --title="Select Base Directory" \
+            --text="Choose where to create the 'hyprupld' screenshots folder:") || exit 1
+            
+        # Create the hyprupld subdirectory
+        dir="${base_dir}/hyprupld"
+        if [[ ! -d "$dir" ]]; then
+            mkdir -p "$dir" || {
+                log_error "Failed to create hyprupld directory: $dir"
+                save_value "$SAVE_DIR_SETTING" ""
+                exit 1
+            }
+            log_info "Created hyprupld directory at: $dir"
+        fi
+            
+        save_value "$SAVE_DIR_SETTING" "$dir"
+        log_success "Screenshot directory set to: $dir"
+    fi
+    
+    # Verify directory exists and is writable
+    if [[ ! -d "$dir" ]]; then
+        log_error "Screenshot directory does not exist: $dir"
+        save_value "$SAVE_DIR_SETTING" ""
+        exit 1
+    fi
+    
+    if [[ ! -w "$dir" ]]; then
+        log_error "Screenshot directory is not writable: $dir"
+        save_value "$SAVE_DIR_SETTING" ""
+        exit 1
+    fi
+    
+    echo "$dir"
+    return 0
+}
+
+save_screenshot() {
+    if [[ "$save_enabled" == "true" ]]; then
+        # Get current month and year
+        local month_year
+        month_year=$(date +%B-%Y | tr '[:upper:]' '[:lower:]')
+        local monthly_dir="${save_directory}/${month_year}"
+        
+        # Create monthly directory if it doesn't exist
+        if [[ ! -d "$monthly_dir" ]]; then
+            mkdir -p "$monthly_dir"
+            log_info "Created new month directory: $monthly_dir"
+        fi
+        
+        # Generate timestamp and save file
+        local timestamp
+        timestamp=$(date +%Y%m%d-%H%M%S)
+        local save_path="${monthly_dir}/hyprupld-${timestamp}.png"
+        
+        cp "$SCREENSHOT_FILE" "$save_path"
+        log_success "Screenshot saved to: $save_path"
+        fyi "Screenshot saved to: $save_path"
+    fi
+}
+
 display_help() {
     cat << EOF
 hyprupld - Screenshot and Upload Utility
@@ -417,6 +497,7 @@ Options:
   -debug           Enable debug mode with strict error handling
   -reset           Reset all settings and start fresh
   -u, --url URL    Set a custom upload URL
+  -s, --save       Save screenshots to a specified directory
 
 Screenshot Services:
   -guns            Use guns.lol
@@ -572,6 +653,9 @@ verify_screenshot() {
 
 # 8. Upload Functions
 handle_upload() {
+    # Save the screenshot if -s option was used
+    save_screenshot
+    
     if [[ -n "$service" ]]; then
         upload_screenshot
     else
@@ -778,6 +862,9 @@ initialize_script() {
 
 # 11. Main Function
 main() {
+    # Add this line before parse_arguments
+    save_enabled=false
+    
     initialize_script
     parse_arguments "$@"
     

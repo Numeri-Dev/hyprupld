@@ -72,9 +72,20 @@ Options:
   -h, --help     Show this help message
   -reset         Reset all settings
   -u, --url URL  Set custom upload URL
+  -s, --save     Save screenshots locally in organized folders
 ```
 
 > **Note:** If no service is selected, the file will be copied to the clipboard.
+
+### Local Screenshot Storage
+
+When using the `-s` or `--save` option, HyprUpld will:
+- Prompt for a base directory on first use
+- Create a `hyprupld` folder in the chosen location
+- Automatically organize screenshots by month (e.g., `march-2024`, `april-2024`)
+- Save files with format: `hyprupld-YYYYMMDD-HHMMSS.png`
+
+Example directory structure:
 
 ---
 
