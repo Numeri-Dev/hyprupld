@@ -379,6 +379,9 @@ parse_arguments() {
                 handle_save_option
                 shift
                 ;;
+            -update)
+                handle_update
+                ;;
             -*)
                 local service_name="${1#-}"
                 if [[ -n "${SERVICES[$service_name]:-}" ]]; then
@@ -508,6 +511,7 @@ Options:
   -reset           Reset all settings and start fresh
   -u, --url URL    Set a custom upload URL
   -s, --save       Save screenshots to a specified directory
+  -update          Update hyprupld to the latest version
 
 Screenshot Services:
   -guns            Use guns.lol
@@ -889,6 +893,51 @@ main() {
     return 0
 }
 
+# Add these new functions near the other function definitions
+handle_update() {
+    if [[ ! -d "$HOME/hyprupld" ]]; then
+        log_info "hyprupld source directory not found, cloning repository..."
+        if ! git clone https://github.com/PhoenixAceVFX/hyprupld.git "$HOME/hyprupld"; then
+            log_error "Failed to clone repository"
+            exit 1
+        fi
+        log_success "Repository cloned successfully"
+    fi
+
+    log_step "Updating hyprupld..."
+    cd "$HOME/hyprupld" || exit 1
+    
+    log_info "Pulling latest changes from repository..."
+    if ! git pull; then
+        log_error "Failed to pull latest changes"
+        exit 1
+    fi
+    
+    if ! bash compile.sh; then
+        log_error "Compilation failed"
+        exit 1
+    fi
+    
+    if ! bash install_scripts.sh; then
+        log_error "Installation failed"
+        exit 1
+    fi
+    
+    log_success "hyprupld has been updated successfully"
+    exit 0
+}
+
+prompt_for_update() {
+    if zenity --question \
+        --title="Update Available" \
+        --text="A newer version of hyprupld is available. Would you like to update now?" \
+        --width=300; then
+        handle_update
+    else
+        log_info "You can run with -update to update later"
+    fi
+}
+
 # Update the print_version function
 print_version() {
     echo "$VERSION"
@@ -917,7 +966,7 @@ print_version() {
                 log_info "Your build is newer than the latest release or built from latest source"
             elif [[ "$local_date" -lt "$latest_date" ]]; then
                 log_warning "A newer version is available"
-                log_info "Visit https://github.com/PhoenixAceVFX/hyprupld/releases to update"
+                prompt_for_update
             else
                 log_success "You are running the latest version"
             fi
