@@ -47,4 +47,14 @@ if ! ./install_scripts.sh; then
     exit 1
 fi
 
+# Cleanup build directories
+echo "Cleaning up build directories..."
+if [ -d "Compiled" ]; then
+    rm -rf Compiled
+fi
+
+if [ -d "appimage_build" ]; then
+    rm -rf appimage_build
+fi
+
 echo "Installation completed successfully!"
