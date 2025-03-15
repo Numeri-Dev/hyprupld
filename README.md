@@ -74,6 +74,7 @@ Options:
   -u, --url URL  Set custom upload URL
   -s, --save     Save screenshots locally in organized folders
   -v, --version  Display the current version
+  -update        Check for and install updates
 ```
 
 > **Note:** If no service is selected, the file will be copied to the clipboard.

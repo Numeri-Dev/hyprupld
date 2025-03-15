@@ -962,24 +962,26 @@ print_version() {
         exit 0
     fi
     
-    # Check if version matches expected pattern
-    if [[ "$VERSION" =~ $VERSION_PATTERN ]]; then
-        # Extract date from local version (YYYYMMDD)
-        local_date="${VERSION#hyprupld-}"
-        local_date="${local_date%%-*}"  # Get just the date part
+    # Check if version matches expected pattern (hyprupld-YYYYMMDD-HHMMSS)
+    if [[ "$VERSION" =~ ^hyprupld-([0-9]{8})-([0-9]{6})$ ]]; then
+        # Extract date and time from local version
+        local_date="${BASH_REMATCH[1]}"
+        local_time="${BASH_REMATCH[2]}"
+        local_datetime="${local_date}${local_time}"
         
         # Get latest release info from GitHub
         log_info "Checking for updates..."
         latest_release=$(curl -s "$GITHUB_API_URL")
         
         if [[ -n "$latest_release" ]]; then
-            # Extract the published_at date and convert to YYYYMMDD format
-            latest_date=$(echo "$latest_release" | jq -r '.published_at' | cut -d'T' -f1 | tr -d '-')
+            # Extract the published_at date and time and convert to our format
+            latest_datetime=$(echo "$latest_release" | jq -r '.published_at' | \
+                sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z/\1\2\3\4\5\6/')
             
-            # Compare dates as numbers
-            if [[ "$local_date" -gt "$latest_date" ]]; then
-                log_info "Your build is newer than the latest release or built from latest source"
-            elif [[ "$local_date" -lt "$latest_date" ]]; then
+            # Compare dates as numbers (YYYYMMDDHHMMSS format)
+            if [[ "$local_datetime" -gt "$latest_datetime" ]]; then
+                log_info "Your build is newer than the latest release"
+            elif [[ "$local_datetime" -lt "$latest_datetime" ]]; then
                 log_warning "A newer version is available"
                 prompt_for_update
             else
@@ -988,6 +990,8 @@ print_version() {
         else
             log_warning "Could not check for updates - GitHub API request failed"
         fi
+    else
+        log_warning "Invalid version format: $VERSION"
     fi
     
     exit 0
