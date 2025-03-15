@@ -404,6 +404,15 @@ parse_arguments() {
             -update)
                 handle_update
                 ;;
+            -mute)
+                mute_enabled=true
+                shift
+                ;;
+            -silent)
+                silent_enabled=true
+                mute_enabled=true
+                shift
+                ;;
             -*)
                 local service_name="${1#-}"
                 if [[ -n "${SERVICES[$service_name]:-}" ]]; then
@@ -534,6 +543,8 @@ Options:
   -u, --url URL    Set a custom upload URL
   -s, --save       Save screenshots to a specified directory
   -update          Update hyprupld to the latest version
+  -mute            Mute sound feedback
+  -silent          Silent mode (no sound or notification)
 
 Screenshot Services:
   -guns            Use guns.lol
@@ -915,6 +926,8 @@ initialize_script() {
 main() {
     # Add this line before parse_arguments
     save_enabled=false
+    mute_enabled=false
+    silent_enabled=false
     
     initialize_script
     parse_arguments "$@"
@@ -1035,8 +1048,11 @@ print_version() {
     exit 0
 }
 
-# Add this new function to the audio section
+# Update the play_sound function calls
 play_sound() {
+    if [[ "$mute_enabled" == "true" || "$silent_enabled" == "true" ]]; then
+        return 0
+    fi
     local sound_file="$1"
     
     # Check if sound file exists
@@ -1058,6 +1074,14 @@ play_sound() {
         log_warning "No supported audio player found. Install pulseaudio-utils, sox, alsa-utils, or mpg123 for sound feedback."
         return 1
     fi
+}
+
+# Update the fyi function calls
+fyi() {
+    if [[ "$silent_enabled" == "true" ]]; then
+        return 0
+    fi
+    # ... existing code ...
 }
 
 # Add this to the initialization section

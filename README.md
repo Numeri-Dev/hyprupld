@@ -75,6 +75,8 @@ Options:
   -s, --save     Save screenshots locally in organized folders
   -v, --version  Display the current version
   -update        Check for and install updates
+  -mute          Mute sound feedback
+  -silent        Silent mode (no sound or notification)
 ```
 
 > **Note:** If no service is selected, the file will be copied to the clipboard.
@@ -96,6 +98,7 @@ Example directory structure:
 - Automatic package manager detection and fallback
 - GUI dialogs for user interactions
 - Debug mode for troubleshooting (`-debug`)
+- **Mute and Silent Modes**: Use `-mute` to disable sound feedback or `-silent` to disable both sound and notifications.
 
 ### Configuration
 
