@@ -216,9 +216,10 @@ get_package_managers() {
 
 check_dependencies() {
     log_step "Checking for required tools"
-    local required_packages=("zenity" "jq" "xclip" "fyi" "wl-clipboard")
+    local required_packages=("zenity" "jq" "xclip" "fyi")
     local missing_packages=()
 
+    # Check for required packages
     for package in "${required_packages[@]}"; do
         if ! command -v "$package" &>/dev/null; then
             missing_packages+=("$package")
@@ -228,12 +229,22 @@ check_dependencies() {
         fi
     done
 
+    # Special check for wl-copy (because wl-clipboard is obnoxious)
+    if ! command -v wl-copy &>/dev/null; then
+        missing_packages+=("wl-clipboard")
+        log_warning "Missing package: wl-clipboard (provides wl-copy)"
+    else
+        log_info "Found package: wl-copy (from wl-clipboard)"
+    fi
+
+    # Install missing packages if any
     if [[ ${#missing_packages[@]} -gt 0 ]]; then
         install_missing_packages "${missing_packages[@]}"
     else
         log_success "All required packages are already installed"
     fi
 }
+
 
 install_missing_packages() {
     local missing_packages=("$@")
