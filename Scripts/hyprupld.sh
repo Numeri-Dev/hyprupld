@@ -216,7 +216,7 @@ get_package_managers() {
 
 check_dependencies() {
     log_step "Checking for required tools"
-    local required_packages=("zenity" "jq" "xclip" "fyi")
+    local required_packages=("zenity" "jq" "xclip" "fyi" "wl-clipboard")
     local missing_packages=()
 
     for package in "${required_packages[@]}"; do
@@ -605,7 +605,7 @@ upload_to_fakecrime() {
         -H "Authorization: $auth" \
         -v "$url" 2>/dev/null)
         
-    if [[ -z "$image_url" || "$image_url" == "null" ]]; then
+    if [[ -z "$image_url" || "$image_url" == "null" ]]; thenm
         log_error "Failed to upload screenshot"
         return 1
     fi
