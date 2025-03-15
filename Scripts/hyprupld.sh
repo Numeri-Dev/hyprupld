@@ -667,9 +667,21 @@ copy_to_clipboard() {
 
 copy_url_to_clipboard() {
     local url="$1"
-    echo -n "$url" | xclip -selection clipboard
+
+    if command -v wl-copy &> /dev/null; then
+        log_info "Using wl-copy for URL clipboard operations"
+        echo -n "$url" | wl-copy
+    elif command -v xclip &> /dev/null; then
+        log_info "Using xclip for URL clipboard operations"
+        echo -n "$url" | xclip -selection clipboard
+    else
+        log_error "No clipboard utility found (xclip or wl-copy)"
+        return 1
+    fi
+
     local clipboard_content
-    clipboard_content=$(xclip -selection clipboard -o)
+    clipboard_content=$( (command -v wl-copy &> /dev/null && wl-paste) || (command -v xclip &> /dev/null && xclip -selection clipboard -o) )
+    
     log_info "URL copied to clipboard: $clipboard_content"
     fyi "Image URL copied to clipboard: $clipboard_content"
 }
