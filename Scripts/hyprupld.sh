@@ -163,9 +163,12 @@ check_system_requirements() {
 }
 
 check_display_server() {
-    if [[ -z "$DISPLAY" && -z "$WAYLAND_DISPLAY" ]]; then
-        log_error "No display server detected"
-        exit 1
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+        echo "wayland"
+    elif [[ -n "${DISPLAY:-}" ]]; then
+        echo "x11"
+    else
+        echo "unknown"
     fi
 }
 
@@ -750,9 +753,9 @@ process_upload_response() {
 
 # Add this helper function near the other utility functions
 detect_display_server() {
-    if [[ -n "$WAYLAND_DISPLAY" ]]; then
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
         echo "wayland"
-    elif [[ -n "$DISPLAY" ]]; then
+    elif [[ -n "${DISPLAY:-}" ]]; then
         echo "x11"
     else
         echo "unknown"
