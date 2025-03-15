@@ -104,6 +104,13 @@ install_all_binaries() {
             # Skip hidden files
             [[ "$base_name" == .* ]] && continue
             
+            # Check for and remove error AppImages
+            if [[ "$base_name" == "error" || "$base_name" == "error.AppImage" ]]; then
+                log_warning "Found error AppImage, removing: $binary"
+                rm -f "$binary"
+                continue
+            fi
+            
             if install_binary "$binary" "$base_name"; then
                 installed_commands+=("${base_name/-x86_64/}")
                 installed_commands[-1]="${installed_commands[-1]/.AppImage/}"
