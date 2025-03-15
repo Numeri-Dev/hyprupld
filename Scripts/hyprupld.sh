@@ -646,20 +646,49 @@ process_upload_response() {
     copy_url_to_clipboard "$url"
 }
 
+# Add this helper function near the other utility functions
+detect_display_server() {
+    if [[ -n "$WAYLAND_DISPLAY" ]]; then
+        echo "wayland"
+    elif [[ -n "$DISPLAY" ]]; then
+        echo "x11"
+    else
+        echo "unknown"
+    fi
+}
+
+# Update the clipboard functions
 copy_to_clipboard() {
     log_step "Copying screenshot to clipboard"
     
-    if command -v wl-copy &> /dev/null; then
-        log_info "Using wl-copy for clipboard operations"
-        cat "$SCREENSHOT_FILE" | wl-copy
-        clipboard_content=$(wl-paste 2>&1)
-    elif command -v xclip &> /dev/null; then
-        log_info "Using xclip for clipboard operations"
-        xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"
-    else
-        log_error "No clipboard utility found (xclip or wl-copy)"
-        return 1
-    fi
+    local display_server
+    display_server=$(detect_display_server)
+    
+    case "$display_server" in
+        "wayland")
+            if command -v wl-copy &> /dev/null; then
+                log_info "Using wl-copy for Wayland clipboard operations"
+                cat "$SCREENSHOT_FILE" | wl-copy
+                clipboard_content=$(wl-paste 2>&1)
+            else
+                log_error "wl-copy not found. Please install wl-clipboard"
+                return 1
+            fi
+            ;;
+        "x11")
+            if command -v xclip &> /dev/null; then
+                log_info "Using xclip for X11 clipboard operations"
+                xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"
+            else
+                log_error "xclip not found. Please install xclip"
+                return 1
+            fi
+            ;;
+        *)
+            log_error "No supported display server detected"
+            return 1
+            ;;
+    esac
     
     log_success "Screenshot copied to clipboard"
     fyi "Screenshot copied to clipboard"
@@ -668,20 +697,35 @@ copy_to_clipboard() {
 
 copy_url_to_clipboard() {
     local url="$1"
-
-    if command -v wl-copy &> /dev/null; then
-        log_info "Using wl-copy for URL clipboard operations"
-        echo -n "$url" | wl-copy
-    elif command -v xclip &> /dev/null; then
-        log_info "Using xclip for URL clipboard operations"
-        echo -n "$url" | xclip -selection clipboard
-    else
-        log_error "No clipboard utility found (xclip or wl-copy)"
-        return 1
-    fi
-
-    local clipboard_content
-    clipboard_content=$( (command -v wl-copy &> /dev/null && wl-paste) || (command -v xclip &> /dev/null && xclip -selection clipboard -o) )
+    local display_server
+    display_server=$(detect_display_server)
+    
+    case "$display_server" in
+        "wayland")
+            if command -v wl-copy &> /dev/null; then
+                log_info "Using wl-copy for Wayland clipboard operations"
+                echo -n "$url" | wl-copy
+                clipboard_content=$(wl-paste)
+            else
+                log_error "wl-copy not found. Please install wl-clipboard"
+                return 1
+            fi
+            ;;
+        "x11")
+            if command -v xclip &> /dev/null; then
+                log_info "Using xclip for X11 clipboard operations"
+                echo -n "$url" | xclip -selection clipboard
+                clipboard_content=$(xclip -selection clipboard -o)
+            else
+                log_error "xclip not found. Please install xclip"
+                return 1
+            fi
+            ;;
+        *)
+            log_error "No supported display server detected"
+            return 1
+            ;;
+    esac
     
     log_info "URL copied to clipboard: $clipboard_content"
     fyi "Image URL copied to clipboard: $clipboard_content"
