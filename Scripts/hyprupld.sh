@@ -605,7 +605,7 @@ upload_to_fakecrime() {
         -H "Authorization: $auth" \
         -v "$url" 2>/dev/null)
         
-    if [[ -z "$image_url" || "$image_url" == "null" ]]; thenm
+    if [[ -z "$image_url" || "$image_url" == "null" ]]; then
         log_error "Failed to upload screenshot"
         return 1
     fi
