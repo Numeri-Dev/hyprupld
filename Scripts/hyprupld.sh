@@ -974,24 +974,30 @@ print_version() {
         latest_release=$(curl -s "$GITHUB_API_URL")
         
         if [[ -n "$latest_release" ]]; then
-            # Extract the published_at date and time and convert to our format
-            latest_datetime=$(echo "$latest_release" | jq -r '.published_at' | \
-                sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z/\1\2\3\4\5\6/')
+            # Extract the tag name (version) from the latest release
+            latest_version=$(echo "$latest_release" | jq -r '.tag_name')
             
-            # Compare dates as numbers (YYYYMMDDHHMMSS format)
-            if [[ "$local_datetime" -gt "$latest_datetime" ]]; then
-                log_info "Your build is newer than the latest release"
-            elif [[ "$local_datetime" -lt "$latest_datetime" ]]; then
-                log_warning "A newer version is available"
-                prompt_for_update
+            # Check if the latest version matches our expected format
+            if [[ "$latest_version" =~ ^hyprupld-([0-9]{8})-([0-9]{6})$ ]]; then
+                latest_date="${BASH_REMATCH[1]}"
+                latest_time="${BASH_REMATCH[2]}"
+                latest_datetime="${latest_date}${latest_time}"
+                
+                # Compare versions
+                if (( local_datetime >= latest_datetime )); then
+                    log_success "You are running the latest version"
+                else
+                    log_warning "A newer version is available"
+                    prompt_for_update
+                fi
             else
-                log_success "You are running the latest version"
+                log_warning "Invalid version format from GitHub: $latest_version"
             fi
         else
             log_warning "Could not check for updates - GitHub API request failed"
         fi
     else
-        log_warning "Invalid version format: $VERSION"
+        log_warning "Invalid local version format: $VERSION"
     fi
     
     exit 0
