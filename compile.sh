@@ -356,4 +356,18 @@ cd "$ORIGINAL_DIR"
 log_verbose "Returned to original directory: $ORIGINAL_DIR"
 
 echo -e "${GREEN}Compilation complete!${NC}"
-exit 0 
+exit 0
+
+# Create the installation package
+INSTALL_DIR="build"
+mkdir -p "$INSTALL_DIR"
+
+# Copy the main script
+cp Scripts/hyprupld.sh "$INSTALL_DIR/hyprupld"
+
+# Create sounds directory and copy sound files
+mkdir -p "$INSTALL_DIR/sounds"
+cp sounds/*.mp3 "$INSTALL_DIR/sounds/"
+
+# Make the script executable
+chmod +x "$INSTALL_DIR/hyprupld" 

@@ -13,6 +13,7 @@ set -e
 #==============================================================================
 SCRIPTS_DIR="$(realpath "$(dirname "$0")/Compiled")"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+SOUNDS_DIR="$(realpath "$(dirname "$0")/sounds")"
 
 #==============================================================================
 # Terminal Colors
@@ -146,6 +147,15 @@ main() {
     ensure_root_privileges
     install_all_binaries
     
+    # Create the installation directories for sounds
+    sudo mkdir -p /usr/local/share/hyprupld/sounds
+
+    # Install the sound files from the project sounds directory
+    sudo cp "$SOUNDS_DIR"/*.mp3 /usr/local/share/hyprupld/sounds/
+
+    # Set permissions for sound files
+    sudo chmod 644 /usr/local/share/hyprupld/sounds/*
+
     log_header "Installation Complete"
     echo
 }

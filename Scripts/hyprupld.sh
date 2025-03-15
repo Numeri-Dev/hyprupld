@@ -58,6 +58,12 @@ readonly VERSION="hyprupld-dev"
 readonly GITHUB_API_URL="https://api.github.com/repos/PhoenixAceVFX/hyprupld/releases/latest"
 readonly VERSION_PATTERN="^hyprupld-[0-9]{8}-[0-9]{6}$"
 
+# Add these near the top with other readonly variables
+readonly SOUND_DIR="/usr/local/share/hyprupld/sounds"
+readonly SCREENSHOT_SOUND="${SOUND_DIR}/sstaken.mp3"
+readonly CLIPBOARD_SOUND="${SOUND_DIR}/clipboard.mp3"
+readonly LINK_SOUND="${SOUND_DIR}/link.mp3"
+
 #==============================================================================
 # Function Definitions
 #==============================================================================
@@ -230,7 +236,9 @@ get_package_managers() {
 check_dependencies() {
     log_step "Checking for required tools"
     local required_packages=("zenity" "jq" "xclip" "fyi")
+    local audio_packages=("pulseaudio-utils" "sox" "alsa-utils" "mpg123")
     local missing_packages=()
+    local has_audio_player=false
 
     # Check for required packages
     for package in "${required_packages[@]}"; do
@@ -241,6 +249,20 @@ check_dependencies() {
             log_info "Found package: $package"
         fi
     done
+
+    # Check for at least one audio player
+    for player in "paplay" "play" "aplay" "mpg123"; do
+        if command -v "$player" &>/dev/null; then
+            has_audio_player=true
+            log_info "Found audio player: $player"
+            break
+        fi
+    done
+
+    if [[ "$has_audio_player" == "false" ]]; then
+        log_warning "No audio player found. Installing pulseaudio-utils for sound support"
+        missing_packages+=("pulseaudio-utils")
+    fi
 
     # Special check for wl-copy (because wl-clipboard is obnoxious)
     if ! command -v wl-copy &>/dev/null; then
@@ -573,6 +595,7 @@ take_screenshot() {
 take_wayland_screenshot() {
     log_info "Using grimblast for Wayland/i3 environment"
     grimblast save area "$SCREENSHOT_FILE"
+    play_sound "$SCREENSHOT_SOUND"
 }
 
 take_kde_screenshot() {
@@ -582,8 +605,10 @@ take_kde_screenshot() {
     
     if [[ "$tool" == "Flameshot" ]]; then
         flameshot gui -p "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     else
         spectacle --region --background --nonotify --output "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     fi
 }
 
@@ -593,8 +618,10 @@ take_xfce_screenshot() {
     
     if [[ "$tool" == "XFCE4-Screenshooter" ]]; then
         xfce4-screenshooter -r -s "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     else
         flameshot gui -p "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     fi
 }
 
@@ -604,8 +631,10 @@ take_gnome_screenshot() {
     
     if [[ "$tool" == "GNOME-Screenshot" ]]; then
         gnome-screenshot -a -f "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     else
         flameshot gui -p "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     fi
 }
 
@@ -615,13 +644,16 @@ take_cinnamon_screenshot() {
     
     if [[ "$tool" == "GNOME-Screenshot" ]]; then
         gnome-screenshot -a -f "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     else
         flameshot gui -p "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     fi
 }
 
 take_deepin_screenshot() {
     deepin-screenshot -s "$SCREENSHOT_FILE"
+    play_sound "$SCREENSHOT_SOUND"
 }
 
 take_mate_screenshot() {
@@ -630,8 +662,10 @@ take_mate_screenshot() {
     
     if [[ "$tool" == "MATE-Screenshot" ]]; then
         mate-screenshot -a -f "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     else
         flameshot gui -p "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
     fi
 }
 
@@ -801,6 +835,7 @@ copy_to_clipboard() {
     
     log_success "Screenshot copied to clipboard"
     fyi "Screenshot copied to clipboard"
+    play_sound "$CLIPBOARD_SOUND"
     return 0
 }
 
@@ -838,6 +873,7 @@ copy_url_to_clipboard() {
     
     log_info "URL copied to clipboard: $clipboard_content"
     fyi "Image URL copied to clipboard: $clipboard_content"
+    play_sound "$LINK_SOUND"
 }
 
 # 9. Authentication Functions
@@ -862,6 +898,7 @@ get_authentication() {
 initialize_script() {
     check_system_requirements
     ensure_config_dir
+    ensure_sound_files
     validate_config
     
     # Detect distribution and desktop environment
@@ -996,6 +1033,51 @@ print_version() {
     fi
     
     exit 0
+}
+
+# Add this new function to the audio section
+play_sound() {
+    local sound_file="$1"
+    
+    # Check if sound file exists
+    if [[ ! -f "$sound_file" ]]; then
+        log_warning "Sound file not found: $sound_file"
+        return 1
+    fi
+
+    # Try different audio players in order of preference
+    if command -v paplay &> /dev/null; then
+        paplay "$sound_file" &> /dev/null
+    elif command -v play &> /dev/null; then
+        play -q "$sound_file" &> /dev/null
+    elif command -v aplay &> /dev/null; then
+        aplay -q "$sound_file" &> /dev/null
+    elif command -v mpg123 &> /dev/null; then
+        mpg123 -q "$sound_file" &> /dev/null
+    else
+        log_warning "No supported audio player found. Install pulseaudio-utils, sox, alsa-utils, or mpg123 for sound feedback."
+        return 1
+    fi
+}
+
+# Add this to the initialization section
+ensure_sound_files() {
+    # Create sounds directory if it doesn't exist
+    if [[ ! -d "$SOUND_DIR" ]]; then
+        mkdir -p "$SOUND_DIR"
+        log_info "Created sounds directory: $SOUND_DIR"
+    fi
+
+    # Copy sound files from script directory to config directory if they don't exist
+    local script_dir
+    script_dir="$(dirname "$(readlink -f "$0")")"
+    
+    for sound in "sstaken.mp3" "clipboard.mp3" "link.mp3"; do
+        if [[ ! -f "${SOUND_DIR}/${sound}" && -f "${script_dir}/${sound}" ]]; then
+            cp "${script_dir}/${sound}" "${SOUND_DIR}/${sound}"
+            log_info "Copied sound file: ${sound}"
+        fi
+    done
 }
 
 #==============================================================================
