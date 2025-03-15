@@ -62,6 +62,15 @@ install_binary() {
     local source_file="$1"
     local dest_name="$2"
     
+    # Debug output
+    log_info "Processing file: $source_file"
+    
+    # Validate input
+    if [[ -z "$dest_name" || "$dest_name" == "error" ]]; then
+        log_error "Invalid destination name: '$dest_name' for source: $source_file"
+        return 1
+    }
+    
     # Normalize binary name
     dest_name="${dest_name/-x86_64/}"
     dest_name="${dest_name/.AppImage/}"
@@ -85,9 +94,16 @@ install_binary() {
 install_all_binaries() {
     local installed_commands=()
     
+    # Debug output
+    log_info "Contents of $SCRIPTS_DIR:"
+    ls -la "$SCRIPTS_DIR"
+    
     for binary in "$SCRIPTS_DIR"/*; do
         if [ -f "$binary" ]; then
             local base_name=$(basename "$binary")
+            # Skip hidden files
+            [[ "$base_name" == .* ]] && continue
+            
             if install_binary "$binary" "$base_name"; then
                 installed_commands+=("${base_name/-x86_64/}")
                 installed_commands[-1]="${installed_commands[-1]/.AppImage/}"
