@@ -962,28 +962,23 @@ print_version() {
         exit 0
     fi
     
-    # Check if version matches expected pattern (hyprupld-YYYYMMDD-HHMMSS)
-    if [[ "$VERSION" =~ ^hyprupld-([0-9]{8})-([0-9]{6})$ ]]; then
-        # Extract date and time from local version
-        local_date="${BASH_REMATCH[1]}"
-        local_time="${BASH_REMATCH[2]}"
-        local_datetime="${local_date}${local_time}"
+    # Get latest release info from GitHub
+    log_info "Checking for updates..."
+    latest_release=$(curl -s "$GITHUB_API_URL")
+    
+    if [[ -n "$latest_release" ]]; then
+        # Extract the published date from the latest release
+        latest_date=$(echo "$latest_release" | jq -r '.published_at')
         
-        # Get latest release info from GitHub
-        log_info "Checking for updates..."
-        latest_release=$(curl -s "$GITHUB_API_URL")
-        
-        if [[ -n "$latest_release" ]]; then
-            # Extract the tag name (version) from the latest release
-            latest_version=$(echo "$latest_release" | jq -r '.tag_name')
+        if [[ -n "$latest_date" && "$latest_date" != "null" ]]; then
+            # Convert GitHub ISO 8601 date to comparable format (YYYYMMDDHHMMSS)
+            latest_datetime=$(date -d "$latest_date" +%Y%m%d%H%M%S)
             
-            # Check if the latest version matches our expected format
-            if [[ "$latest_version" =~ ^hyprupld-([0-9]{8})-([0-9]{6})$ ]]; then
-                latest_date="${BASH_REMATCH[1]}"
-                latest_time="${BASH_REMATCH[2]}"
-                latest_datetime="${latest_date}${latest_time}"
+            # Get local version date (assuming version format hyprupld-YYYYMMDD-HHMMSS)
+            if [[ "$VERSION" =~ ^hyprupld-([0-9]{8})-([0-9]{6})$ ]]; then
+                local_datetime="${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
                 
-                # Compare versions
+                # Compare timestamps
                 if (( local_datetime >= latest_datetime )); then
                     log_success "You are running the latest version"
                 else
@@ -991,13 +986,13 @@ print_version() {
                     prompt_for_update
                 fi
             else
-                log_warning "Invalid version format from GitHub: $latest_version"
+                log_warning "Invalid local version format: $VERSION"
             fi
         else
-            log_warning "Could not check for updates - GitHub API request failed"
+            log_warning "Could not determine latest release date"
         fi
     else
-        log_warning "Invalid local version format: $VERSION"
+        log_warning "Could not check for updates - GitHub API request failed"
     fi
     
     exit 0
