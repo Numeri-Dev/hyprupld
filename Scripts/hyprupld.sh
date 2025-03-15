@@ -51,6 +51,13 @@ declare -A SERVICES=(
 # Add to the configuration section near other readonly variables
 readonly SAVE_DIR_SETTING="screenshot_save_directory"
 
+# Add this near the other readonly variables at the top
+readonly VERSION="hyprupld-dev"
+
+# Add these new readonly variables near the top with other readonly declarations
+readonly GITHUB_API_URL="https://api.github.com/repos/PhoenixAceVFX/hyprupld/releases/latest"
+readonly VERSION_PATTERN="^hyprupld-[0-9]{8}-[0-9]{6}$"
+
 #==============================================================================
 # Function Definitions
 #==============================================================================
@@ -877,6 +884,46 @@ main() {
     
     log_success "Operation completed successfully"
     return 0
+}
+
+# Update the print_version function
+print_version() {
+    echo "$VERSION"
+    
+    # Exit early if using dev version
+    if [[ "$VERSION" == "hyprupld-dev" ]]; then
+        exit 0
+    fi
+    
+    # Check if version matches expected pattern
+    if [[ "$VERSION" =~ $VERSION_PATTERN ]]; then
+        # Extract date from local version (YYYYMMDD)
+        local_date="${VERSION#hyprupld-}"
+        local_date="${local_date%%-*}"  # Get just the date part
+        
+        # Get latest release info from GitHub
+        log_info "Checking for updates..."
+        latest_release=$(curl -s "$GITHUB_API_URL")
+        
+        if [[ -n "$latest_release" ]]; then
+            # Extract the published_at date and convert to YYYYMMDD format
+            latest_date=$(echo "$latest_release" | jq -r '.published_at' | cut -d'T' -f1 | tr -d '-')
+            
+            # Compare dates as numbers
+            if [[ "$local_date" -gt "$latest_date" ]]; then
+                log_info "Your build is newer than the latest release or built from latest source"
+            elif [[ "$local_date" -lt "$latest_date" ]]; then
+                log_warning "A newer version is available"
+                log_info "Visit https://github.com/PhoenixAceVFX/hyprupld/releases to update"
+            else
+                log_success "You are running the latest version"
+            fi
+        else
+            log_warning "Could not check for updates - GitHub API request failed"
+        fi
+    fi
+    
+    exit 0
 }
 
 #==============================================================================

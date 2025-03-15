@@ -198,6 +198,10 @@ if [ ! -f "$ICON_PATH" ]; then
   echo -e "${GREEN}Created placeholder icon at $ICON_PATH${NC}"
 fi
 
+# Store original directory
+ORIGINAL_DIR=$(pwd)
+log_verbose "Storing original directory: $ORIGINAL_DIR"
+
 # Process each script in the Scripts directory
 log_verbose "Scanning Scripts directory for files to process"
 SCRIPT_COUNT=0
@@ -224,10 +228,22 @@ for script in "$SCRIPTS_DIR"/*; do
     mkdir -p "$SCRIPT_APPDIR/usr/share/applications"
     mkdir -p "$SCRIPT_APPDIR/usr/share/icons/hicolor/256x256/apps"
     
+    # Verify script exists and copy it to AppDir
+    if [ ! -f "$script" ]; then
+        echo -e "${RED}Error: Script not found: $script${NC}"
+        continue
+    fi
+
     # Copy script to AppDir
     log_verbose "Copying script to: $SCRIPT_APPDIR/usr/bin/$SCRIPT_NAME"
     cp "$script" "$SCRIPT_APPDIR/usr/bin/$SCRIPT_NAME"
     chmod +x "$SCRIPT_APPDIR/usr/bin/$SCRIPT_NAME"
+    
+    # Update version string in the copied script
+    BUILD_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    VERSION_STRING="hyprupld-${BUILD_TIMESTAMP}"
+    log_verbose "Setting version to: $VERSION_STRING"
+    sed -i "s/readonly VERSION=\"hyprupld-dev\"/readonly VERSION=\"$VERSION_STRING\"/" "$SCRIPT_APPDIR/usr/bin/$SCRIPT_NAME" || true
     
     # Copy icon
     log_verbose "Copying icon to AppDir locations"
@@ -333,4 +349,11 @@ if ls "$COMPILED_DIR"/*.AppImage 1> /dev/null 2>&1; then
   log_verbose "Created AppImages: $(ls -1 "$COMPILED_DIR"/*.AppImage)"
 else
   echo -e "${RED}No AppImages were created. Please check the errors above.${NC}"
-fi 
+fi
+
+# After AppImage creation, return to original directory
+cd "$ORIGINAL_DIR"
+log_verbose "Returned to original directory: $ORIGINAL_DIR"
+
+echo -e "${GREEN}Compilation complete!${NC}"
+exit 0 

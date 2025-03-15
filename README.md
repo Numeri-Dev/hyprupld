@@ -73,6 +73,7 @@ Options:
   -reset         Reset all settings
   -u, --url URL  Set custom upload URL
   -s, --save     Save screenshots locally in organized folders
+  -v, --version  Display the current version
 ```
 
 > **Note:** If no service is selected, the file will be copied to the clipboard.
@@ -86,6 +87,30 @@ When using the `-s` or `--save` option, HyprUpld will:
 - Save files with format: `hyprupld-YYYYMMDD-HHMMSS.png`
 
 Example directory structure:
+
+### Additional Features
+
+- Interactive screenshot tool selection for each desktop environment
+- Persistent configuration storage for settings and preferences
+- Automatic package manager detection and fallback
+- GUI dialogs for user interactions
+- Debug mode for troubleshooting (`-debug`)
+
+### Configuration
+
+HyprUpld stores its configuration in `~/.config/hyprupld/`:
+- Authentication keys for upload services
+- Preferred screenshot tools per desktop environment
+- Screenshot save location preferences
+- Package manager information
+
+Use `-reset` to clear all saved settings and start fresh.
+
+### Environment Variables
+
+- `HYPRUPLD_CONFIG`: Override default config directory location
+- `HYPRUPLD_DEBUG`: Enable debug output when set to 1
+- Automatically detects `DISPLAY` and `WAYLAND_DISPLAY` for proper display server support
 
 ---
 
