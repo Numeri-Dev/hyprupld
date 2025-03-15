@@ -69,7 +69,7 @@ install_binary() {
     if [[ -z "$dest_name" || "$dest_name" == "error" ]]; then
         log_error "Invalid destination name: '$dest_name' for source: $source_file"
         return 1
-    }
+    fi
     
     # Normalize binary name
     dest_name="${dest_name/-x86_64/}"
