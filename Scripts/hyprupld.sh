@@ -649,12 +649,13 @@ process_upload_response() {
 copy_to_clipboard() {
     log_step "Copying screenshot to clipboard"
     
-    if command -v xclip &> /dev/null; then
+    if command -v wl-copy &> /dev/null; then
+        log_info "Using wl-copy for clipboard operations"
+        cat "$SCREENSHOT_FILE" | wl-copy
+        clipboard_content=$(wl-paste 2>&1)
+    elif command -v xclip &> /dev/null; then
         log_info "Using xclip for clipboard operations"
         xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"
-    elif command -v wl-copy &> /dev/null; then
-        log_info "Using wl-copy for clipboard operations"
-        wl-copy < "$SCREENSHOT_FILE"
     else
         log_error "No clipboard utility found (xclip or wl-copy)"
         return 1
