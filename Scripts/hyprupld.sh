@@ -812,7 +812,7 @@ copy_to_clipboard() {
             if command -v wl-copy &> /dev/null; then
                 log_info "Using wl-copy for Wayland clipboard operations"
                 cat "$SCREENSHOT_FILE" | wl-copy
-                clipboard_content=$(wl-paste 2>&1)
+                clipboard_content=$(wl-paste 2>&1 | tr -d '\0')
             else
                 log_error "wl-copy not found. Please install wl-clipboard"
                 return 1
@@ -849,7 +849,7 @@ copy_url_to_clipboard() {
             if command -v wl-copy &> /dev/null; then
                 log_info "Using wl-copy for Wayland clipboard operations"
                 echo -n "$url" | wl-copy
-                clipboard_content=$(wl-paste)
+                clipboard_content=$(wl-paste 2>&1 | tr -d '\0')
             else
                 log_error "wl-copy not found. Please install wl-clipboard"
                 return 1
