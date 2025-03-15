@@ -151,6 +151,7 @@ To install:
 ### Core Tools
 * [curl](https://github.com/curl/curl) - Command line tool for transferring data
 * [xclip](https://github.com/astrand/xclip) - Command line interface to X selections (clipboard)
+* [wl-clipboard](https://github.com/bugaevc/wl-clipboard) - Command line interface to Wayland selections (Clipboard)
 * [fyi](https://github.com/Macchina-CLI/fyi) - Minimal desktop notifications
 * [zenity](https://gitlab.gnome.org/GNOME/zenity) - Display graphical dialog boxes from shell scripts
 * [jq](https://github.com/stedolan/jq) - Lightweight command-line JSON processor
