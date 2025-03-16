@@ -251,9 +251,13 @@ check_dependencies() {
     done
 
     # Check for hyprshot if on Hyprland
-    if [[ "$desktop_env" == *"hyprland"* ]] && ! command -v hyprshot &>/dev/null; then
-        missing_packages+=("hyprshot")
-        log_warning "Missing package: hyprshot (required for Hyprland)"
+    if [[ "$desktop_env" == *"hyprland"* ]]; then
+        if ! command -v hyprshot &>/dev/null; then
+            missing_packages+=("hyprshot")
+            log_warning "Missing package: hyprshot (required for Hyprland)"
+        else
+            log_info "Found package: hyprshot"
+        fi
     fi
 
     # Check for at least one audio player
