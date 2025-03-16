@@ -250,13 +250,19 @@ check_dependencies() {
         fi
     done
 
-    # Check for hyprshot if on Hyprland
+    # Check for hyprshot and hyprpicker if on Hyprland
     if [[ "$desktop_env" == *"hyprland"* ]]; then
         if ! command -v hyprshot &>/dev/null; then
             missing_packages+=("hyprshot")
             log_warning "Missing package: hyprshot (required for Hyprland)"
         else
             log_info "Found package: hyprshot"
+        fi
+        if ! command -v hyprpicker &>/dev/null; then
+            missing_packages+=("hyprpicker")
+            log_warning "Missing package: hyprpicker (required for Hyprland)"
+        else
+            log_info "Found package: hyprpicker"
         fi
     fi
 
@@ -313,6 +319,19 @@ install_missing_packages() {
                 return 0
             else
                 log_error "No AUR helper found for installing hyprshot"
+                return 1
+            fi
+        fi
+        if [[ " ${missing_packages[*]} " == *" hyprpicker "* ]] && [[ "$manager" == "arch" ]]; then
+            log_info "Installing hyprpicker from AUR using yay or paru"
+            if command -v yay &>/dev/null; then
+                yay -S --noconfirm hyprpicker
+                return 0
+            elif command -v paru &>/dev/null; then
+                paru -S --noconfirm hyprpicker
+                return 0
+            else
+                log_error "No AUR helper found for installing hyprpicker"
                 return 1
             fi
         fi
