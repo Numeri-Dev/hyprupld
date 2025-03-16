@@ -293,6 +293,20 @@ install_missing_packages() {
     local package_managers
     mapfile -t package_managers < <(get_package_managers)
     for manager in "${package_managers[@]}"; do
+        if [[ " ${missing_packages[*]} " == *" hyprshot "* ]] && [[ "$manager" == "arch" ]]; then
+            log_info "Installing hyprshot from AUR using yay or paru"
+            if command -v yay &>/dev/null; then
+                yay -S --noconfirm hyprshot
+                return 0
+            elif command -v paru &>/dev/null; then
+                paru -S --noconfirm hyprshot
+                return 0
+            else
+                log_error "No AUR helper found for installing hyprshot"
+                return 1
+            fi
+        fi
+        
         if attempt_package_installation "$manager" "${missing_packages[@]}"; then
             return 0
         fi
