@@ -604,8 +604,13 @@ take_screenshot() {
 }
 
 take_wayland_screenshot() {
-    log_info "Using grimblast for Wayland/i3 environment"
-    grimblast save area "$SCREENSHOT_FILE"
+    if [[ "$desktop_env" == *"hyprland"* ]]; then
+        log_info "Using hyprshot for Hyprland environment"
+        hyprshot -m region -z -s -o "$TEMP_DIR" -f "screenshot.png"
+    else
+        log_info "Using grimblast for Wayland/i3 environment"
+        grimblast save area "$SCREENSHOT_FILE"
+    fi
     play_sound "$SCREENSHOT_SOUND"
 }
 

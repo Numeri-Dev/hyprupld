@@ -198,7 +198,8 @@ To install:
 * [grimblast](https://github.com/hyprwm/contrib) - Screenshot utility for Hyprland
 
 ### Screenshot Tools
-* [grimblast](https://github.com/hyprwm/contrib) - For Hyprland
+* [grimblast](https://github.com/hyprwm/contrib) - For Sway and i3
+* [hyprshot](https://github.com/your-repo/hyprshot) - For Hyprland
 * [spectacle](https://github.com/KDE/spectacle) - For KDE Plasma
 * [gnome-screenshot](https://gitlab.gnome.org/GNOME/gnome-screenshot) - For GNOME
 * [xfce4-screenshooter](https://docs.xfce.org/apps/xfce4-screenshooter/start) - For XFCE
