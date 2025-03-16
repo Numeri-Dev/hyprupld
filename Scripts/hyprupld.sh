@@ -250,6 +250,12 @@ check_dependencies() {
         fi
     done
 
+    # Check for hyprshot if on Hyprland
+    if [[ "$desktop_env" == *"hyprland"* ]] && ! command -v hyprshot &>/dev/null; then
+        missing_packages+=("hyprshot")
+        log_warning "Missing package: hyprshot (required for Hyprland)"
+    fi
+
     # Check for at least one audio player
     for player in "paplay" "play" "aplay" "mpg123"; do
         if command -v "$player" &>/dev/null; then
