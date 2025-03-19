@@ -972,6 +972,11 @@ initialize_script() {
 
 # 11. Main Function
 main() {
+    # Ensure the config directory exists
+    mkdir -p "$CONFIG_DIR"  # Ensure the config directory exists
+    : > "$CONFIG_DIR/debug.log"  # Clear the debug.log file
+    exec > >(tee -a "$CONFIG_DIR/debug.log") 2>&1  # Redirect output to debug.log
+    
     # Add this line before parse_arguments
     save_enabled=false
     mute_enabled=false
@@ -1164,4 +1169,3 @@ trap cleanup_on_exit EXIT
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
-
