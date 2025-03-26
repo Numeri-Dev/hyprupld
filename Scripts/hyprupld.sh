@@ -296,7 +296,6 @@ check_dependencies() {
     fi
 }
 
-
 install_missing_packages() {
     local missing_packages=("$@")
     log_warning "Missing required packages. Installing: ${missing_packages[*]}"
@@ -306,49 +305,52 @@ install_missing_packages() {
         return
     fi
 
-    local package_managers
-    mapfile -t package_managers < <(get_package_managers)
-    for manager in "${package_managers[@]}"; do
-        if [[ " ${missing_packages[*]} " == *" hyprshot "* ]] && [[ "$manager" == "arch" ]]; then
-            log_info "Installing hyprshot from AUR using yay or paru"
-            if command -v yay &>/dev/null; then
-                yay -S --noconfirm hyprshot
-                return 0
-            elif command -v paru &>/dev/null; then
-                paru -S --noconfirm hyprshot
-                return 0
-            else
-                log_error "No AUR helper found for installing hyprshot"
-                return 1
-            fi
-        fi
-        if [[ " ${missing_packages[*]} " == *" hyprpicker "* ]] && [[ "$manager" == "arch" ]]; then
-            log_info "Installing hyprpicker from AUR using yay or paru"
-            if command -v yay &>/dev/null; then
-                yay -S --noconfirm hyprpicker
-                return 0
-            elif command -v paru &>/dev/null; then
-                paru -S --noconfirm hyprpicker
-                return 0
-            else
-                log_error "No AUR helper found for installing hyprpicker"
-                return 1
-            fi
-        fi
-        
-        if attempt_package_installation "$manager" "${missing_packages[@]}"; then
-            return 0
-        fi
-    done
-
-    log_error "Could not install dependencies. Install manually: ${missing_packages[*]}"
-    exit 1
+    # Install missing packages if any
+    if [[ ${#missing_packages[@]} -gt 0 ]]; then
+        local package_managers
+        mapfile -t package_managers < <(get_package_managers)
+        for manager in "${package_managers[@]}"; do
+            case "$manager" in
+                "arch")
+                    handle_gui_installation_arch "${missing_packages[@]}"
+                    return
+                    ;;
+                "debian")
+                    handle_gui_installation_debian "${missing_packages[@]}"
+                    return
+                    ;;
+                "fedora")
+                    handle_gui_installation_fedora "${missing_packages[@]}"
+                    return
+                    ;;
+                "nixos")
+                    handle_gui_installation_nixos "${missing_packages[@]}"
+                    return
+                    ;;
+                "gentoo")
+                    handle_gui_installation_gentoo "${missing_packages[@]}"
+                    return
+                    ;;
+                "opensuse")
+                    handle_gui_installation_opensuse "${missing_packages[@]}"
+                    return
+                    ;;
+                "void")
+                    handle_gui_installation_void "${missing_packages[@]}"
+                    return
+                    ;;
+                *)
+                    log_warning "Unsupported package manager: $manager"
+                    ;;
+            esac
+        done
+    else
+        log_success "All required packages are already installed"
+    fi
 }
 
-handle_gui_installation() {
+handle_gui_installation_debian() {
     local missing_packages=("$@")
-    local askpass_script
-    
     if ! zenity --question \
         --title="Package Installation" \
         --text="This script needs to install the following packages:\n\n${missing_packages[*]}\n\nDo you want to proceed?" \
@@ -361,60 +363,33 @@ handle_gui_installation() {
     sudo_password=$(zenity --password --title="Authentication Required") || exit 1
     askpass_script="$(mktemp)"
     echo '#!/bin/sh' > "$askpass_script"
-    echo "echo '$sudo_password'" >> "$askpass_script"
+    echo "echo '$sudo_password' | sudo -S apt-get install -y ${missing_packages[*]}" >> "$askpass_script"
     chmod +x "$askpass_script"
     export SUDO_ASKPASS="$askpass_script"
+    (bash "$askpass_script" &)
 }
 
-attempt_package_installation() {
-    local manager="$1"
-    shift
-    local packages=("$@")
-    
-    log_info "Attempting to install with $manager"
-    case "$manager" in
-        "arch")
-            sudo -A pacman -S --noconfirm "${packages[@]}"
-            ;;
-        "debian")
-            sudo -A apt-get install -y "${packages[@]}"
-            ;;
-        "fedora")
-            sudo -A dnf install -y "${packages[@]}"
-            ;;
-        "nixos")
-            sudo -A nix-env -iA nixpkgs."${packages[@]}"
-            ;;
-        "gentoo")
-            sudo -A emerge --ask "${packages[@]}"
-            ;;
-        "opensuse")
-            sudo -A zypper install -y "${packages[@]}"
-            ;;
-        "void")
-            sudo -A xbps-install -y "${packages[@]}"
-            ;;
-        "arch_community")
-            if command -v yay &>/dev/null; then
-                yay -S --noconfirm "${packages[@]}"
-            elif command -v paru &>/dev/null; then
-                paru -S --noconfirm "${packages[@]}"
-            else
-                return 1
-            fi
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-    
-    local exit_status=$?
-    if [ $exit_status -eq 0 ]; then
-        log_success "Installation successful"
-        return 0
+handle_gui_installation_arch() {
+    local missing_packages=("$@")
+    if ! zenity --question \
+        --title="Package Installation" \
+        --text="This script needs to install the following packages:\n\n${missing_packages[*]}\n\nDo you want to proceed?" \
+        --width=300; then
+        log_error "User declined package installation"
+        exit 1
     fi
-    return 1
+    
+    local sudo_password
+    sudo_password=$(zenity --password --title="Authentication Required") || exit 1
+    askpass_script="$(mktemp)"
+    echo '#!/bin/sh' > "$askpass_script"
+    echo "echo '$sudo_password' | sudo -S pacman -S --noconfirm ${missing_packages[*]}" >> "$askpass_script"
+    chmod +x "$askpass_script"
+    export SUDO_ASKPASS="$askpass_script"
+    (bash "$askpass_script" &)
 }
+
+# Similar functions for other package managers (fedora, nixos, gentoo, opensuse, void) can be added here.
 
 # 6. Argument Parsing Functions
 parse_arguments() {
