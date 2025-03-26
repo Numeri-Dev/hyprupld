@@ -1134,7 +1134,7 @@ fyi_call() {
         return 0 
     fi
 
-    command -v fyi &>/dev/null && fyi "$1" "$2" || notify-send "$1" "$2"
+    fyi "$1" "$2"
 }
 
 # Add this to the initialization section
