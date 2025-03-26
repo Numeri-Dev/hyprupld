@@ -568,7 +568,7 @@ save_screenshot() {
         
         cp "$SCREENSHOT_FILE" "$save_path"
         log_success "Screenshot saved to: $save_path"
-        fyi "HyprUpld" "Screenshot saved to: $save_path"
+        fyi_call "HyprUpld" "Screenshot saved to: $save_path"
     fi
 }
 
@@ -893,7 +893,7 @@ copy_to_clipboard() {
     esac
     
     log_success "Screenshot copied to clipboard"
-    fyi "HyprUpld" "Screenshot copied to clipboard"
+    fyi_call "HyprUpld" "Screenshot copied to clipboard"
     play_sound "$CLIPBOARD_SOUND"
     return 0
 }
@@ -931,7 +931,7 @@ copy_url_to_clipboard() {
     esac
     
     log_info "URL copied to clipboard: $clipboard_content"
-    fyi "HyprUpld" "Image URL copied to clipboard: $clipboard_content"
+    fyi_call "HyprUpld" "Image URL copied to clipboard: $clipboard_content"
     play_sound "$LINK_SOUND"
 }
 
@@ -1129,12 +1129,12 @@ play_sound() {
     fi
 }
 
-# Update the fyi function calls
-fyi() {
+fyi_call() {
     if [[ "$silent_enabled" == "true" ]]; then
-        return 0
+        return 0 
     fi
-    # ... existing code ...
+
+    command -v fyi &>/dev/null && fyi "$1" "$2" || notify-send "$1" "$2"
 }
 
 # Add this to the initialization section
