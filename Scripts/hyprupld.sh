@@ -998,21 +998,6 @@ main() {
 
 # Add these new functions near the other function definitions
 handle_update() {
-    # Find and kill any running hyprupld processes except our own
-    local our_pid=$$
-    local hyprupld_pids
-    mapfile -t hyprupld_pids < <(pgrep -f "hyprupld" | grep -v "$our_pid")
-    
-    if [[ ${#hyprupld_pids[@]} -gt 0 ]]; then
-        log_warning "Found running hyprupld processes, stopping them for update..."
-        for pid in "${hyprupld_pids[@]}"; do
-            if [[ "$pid" -ne $$ ]] && kill -0 "$pid" 2>/dev/null; then  # Skip the current process
-                log_info "Stopping hyprupld process: $pid"
-                kill "$pid"
-            fi
-        done
-    fi
-
     if [[ ! -d "$HOME/hyprupld" ]]; then
         log_info "hyprupld source directory not found, cloning repository..."
         if ! git clone https://github.com/PhoenixAceVFX/hyprupld.git "$HOME/hyprupld"; then

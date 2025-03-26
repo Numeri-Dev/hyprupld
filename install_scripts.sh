@@ -138,11 +138,17 @@ return_installed_commands() {
 #==============================================================================
 # Main Installation Process
 #==============================================================================
-main() {
+function main() {
     log_header "HyprUpld Installation"
     log_info "Source directory: $SCRIPTS_DIR"
     log_info "Target directory: $INSTALL_DIR"
     
+    # Kill any existing hyprupld process
+    if pgrep -x "hyprupld" > /dev/null; then
+        log_warning "Terminating existing hyprupld process..."
+        pkill -x "hyprupld"
+    fi
+
     check_prerequisites
     ensure_root_privileges
     install_all_binaries
