@@ -10,21 +10,22 @@
 # Repository: https://github.com/PhoenixAceVFX/hyprupld
 #==============================================================================
 
-set -o errexit  # Exit on error
-set -o nounset  # Exit on undefined variables
-set -o pipefail # Exit on pipe failures
+# Exit on error, undefined variables, and pipe failures
+set -o errexit  
+set -o nounset  
+set -o pipefail 
 
-# Configuration paths
+# Configuration paths for settings and package managers
 readonly CONFIG_DIR="${HOME}/.config/hyprupld"
 readonly SETTINGS_FILE="${CONFIG_DIR}/settings.json"
 readonly PCKMGRS_FILE="${CONFIG_DIR}/pckmgrs.json"
 
-# Temporary files
+# Temporary files for screenshots and upload responses
 readonly TEMP_DIR="/tmp"
 readonly SCREENSHOT_FILE="${TEMP_DIR}/screenshot.png"
 readonly UPLOAD_RESPONSE="${TEMP_DIR}/upload.json"
 
-# ANSI color codes
+# ANSI color codes for logging
 readonly COLOR_RED='\033[0;31m'
 readonly COLOR_GREEN='\033[0;32m'
 readonly COLOR_YELLOW='\033[0;33m'
@@ -33,12 +34,12 @@ readonly COLOR_MAGENTA='\033[0;35m'
 readonly COLOR_CYAN='\033[0;36m'
 readonly COLOR_RESET='\033[0m'
 
-# Default values
+# Default values for service, auth header, and URL
 service=""
 auth_header=""
 url=""
 
-# Service configurations
+# Service configurations for different upload services
 declare -A SERVICES=(
     ["pixelvault"]="https://pixelvault.co|Authorization"
     ["guns"]="https://guns.lol/api/upload|key"
@@ -51,14 +52,14 @@ declare -A SERVICES=(
 # Add to the configuration section near other readonly variables
 readonly SAVE_DIR_SETTING="screenshot_save_directory"
 
-# Add this near the other readonly variables at the top
+# Add version information
 readonly VERSION="hyprupld-dev"
 
-# Add these new readonly variables near the top with other readonly declarations
+# Add GitHub API URL and version pattern for updates
 readonly GITHUB_API_URL="https://api.github.com/repos/PhoenixAceVFX/hyprupld/releases/latest"
 readonly VERSION_PATTERN="^hyprupld-[0-9]{8}-[0-9]{6}$"
 
-# Add these near the top with other readonly variables
+# Sound file paths for feedback
 readonly SOUND_DIR="/usr/local/share/hyprupld/sounds"
 readonly SCREENSHOT_SOUND="${SOUND_DIR}/sstaken.mp3"
 readonly CLIPBOARD_SOUND="${SOUND_DIR}/clipboard.mp3"
@@ -68,7 +69,7 @@ readonly LINK_SOUND="${SOUND_DIR}/link.mp3"
 # Function Definitions
 #==============================================================================
 
-# 1. Logging Functions
+# Logging functions for different log levels
 log_info() {
     echo -e "${COLOR_BLUE}[INFO]${COLOR_RESET} $1"
 }
@@ -89,7 +90,7 @@ log_step() {
     echo -e "${COLOR_CYAN}[STEP]${COLOR_RESET} $1"
 }
 
-# 2. Cleanup Functions
+# Cleanup functions to handle errors and exit
 cleanup_on_error() {
     local err=$?
     log_error "An error occurred (Exit code: $err)"
@@ -101,6 +102,7 @@ cleanup_on_exit() {
     cleanup_files
 }
 
+# Remove temporary files created during execution
 cleanup_files() {
     if [[ -f "$SCREENSHOT_FILE" ]]; then
         rm -f "$SCREENSHOT_FILE"
@@ -113,7 +115,7 @@ cleanup_files() {
     fi
 }
 
-# 3. Configuration Functions
+# Ensure the configuration directory exists
 ensure_config_dir() {
     if [[ ! -d "$CONFIG_DIR" ]]; then
         mkdir -p "$CONFIG_DIR"
@@ -121,15 +123,17 @@ ensure_config_dir() {
     fi
 }
 
+# Validate the settings file format
 validate_config() {
     if [[ -f "$SETTINGS_FILE" ]]; then
-        if ! jq empty "$SETTINGS_FILE" 2>/dev/null; then
+        if ! python3 -c "import json; json.load(open('$SETTINGS_FILE'))" 2>/dev/null; then
             log_error "Invalid settings file format"
             backup_and_reset_config
         fi
     fi
 }
 
+# Backup and reset the settings file if corrupted
 backup_and_reset_config() {
     local backup_file="${SETTINGS_FILE}.backup-$(date +%Y%m%d-%H%M%S)"
     if [[ -f "$SETTINGS_FILE" ]]; then
@@ -140,34 +144,50 @@ backup_and_reset_config() {
     log_info "Created new settings file"
 }
 
+# Retrieve a saved value from the settings file
 get_saved_value() {
     local key="$1"
     if [[ -f "$SETTINGS_FILE" ]]; then
-        jq -r ".[\"$key\"] // empty" "$SETTINGS_FILE"
+        python3 -c "import json; print(json.load(open('$SETTINGS_FILE')).get('$key', ''))"
     fi
 }
 
+# Save a key-value pair to the settings file
 save_value() {
     local key="$1"
     local value="$2"
     local temp_file
     temp_file=$(mktemp)
-    
+
     if [[ -f "$SETTINGS_FILE" ]]; then
-        jq --arg key "$key" --arg value "$value" '.[$key] = $value' "$SETTINGS_FILE" > "$temp_file"
+        python3 -c "
+import json
+import sys
+data = json.load(open('$SETTINGS_FILE'))
+data['$key'] = '$value'
+with open('$temp_file', 'w') as f:
+    json.dump(data, f, indent=4)
+"
     else
-        jq --arg key "$key" --arg value "$value" '{($key): $value}' <<< '{}' > "$temp_file"
+        python3 -c "
+import json
+data = {}
+data['$key'] = '$value'
+with open('$temp_file', 'w') as f:
+    json.dump(data, f, indent=4)
+"
     fi
     
     mv "$temp_file" "$SETTINGS_FILE"
 }
 
-# 4. System Check Functions
+# Check system requirements before running the script
 check_system_requirements() {
     check_display_server
     check_basic_dependencies
 }
 
+# Detect the display server (Wayland or X11)
 check_display_server() {
     if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
         echo "wayland"
@@ -178,6 +198,7 @@ check_display_server() {
     fi
 }
 
+# Check for basic dependencies required by the script
 check_basic_dependencies() {
     local basic_deps=("curl" "jq")
     local missing=()
@@ -194,7 +215,7 @@ check_basic_dependencies() {
     fi
 }
 
-# 5. Package Management Functions
+# Detect available package managers on the system
 detect_package_managers() {
     log_step "Detecting package managers..."
     declare -a managers=("pacman" "apt-get" "dnf" "nix-env" "emerge" "zypper" "xbps-install" "yay" "paru")
@@ -223,6 +244,7 @@ detect_package_managers() {
     echo "${detected_managers[@]}"
 }
 
+# Get cached package manager information or detect it
 get_package_managers() {
     if [[ -f "$PCKMGRS_FILE" ]]; then
         log_info "Using cached package manager information"
@@ -233,6 +255,7 @@ get_package_managers() {
     fi
 }
 
+# Check for required tools and dependencies
 check_dependencies() {
     log_step "Checking for required tools"
     local required_packages=("zenity" "jq" "xclip" "fyi")
@@ -250,23 +273,7 @@ check_dependencies() {
         fi
     done
 
-    # Check for hyprshot and hyprpicker if on Hyprland
-    if [[ "$desktop_env" == *"hyprland"* ]]; then
-        if ! command -v hyprshot &>/dev/null; then
-            missing_packages+=("hyprshot")
-            log_warning "Missing package: hyprshot (required for Hyprland)"
-        else
-            log_info "Found package: hyprshot"
-        fi
-        if ! command -v hyprpicker &>/dev/null; then
-            missing_packages+=("hyprpicker")
-            log_warning "Missing package: hyprpicker (required for Hyprland)"
-        else
-            log_info "Found package: hyprpicker"
-        fi
-    fi
-
-    # Check for at least one audio player
+    # Check for audio player availability
     for player in "paplay" "play" "aplay" "mpg123"; do
         if command -v "$player" &>/dev/null; then
             has_audio_player=true
@@ -280,14 +287,6 @@ check_dependencies() {
         missing_packages+=("pulseaudio-utils")
     fi
 
-    # Special check for wl-copy (because wl-clipboard is obnoxious)
-    if ! command -v wl-copy &>/dev/null; then
-        missing_packages+=("wl-clipboard")
-        log_warning "Missing package: wl-clipboard (provides wl-copy)"
-    else
-        log_info "Found package: wl-copy (from wl-clipboard)"
-    fi
-
     # Install missing packages if any
     if [[ ${#missing_packages[@]} -gt 0 ]]; then
         install_missing_packages "${missing_packages[@]}"
@@ -296,6 +295,7 @@ check_dependencies() {
     fi
 }
 
+# Install missing packages using the appropriate package manager
 install_missing_packages() {
     local missing_packages=("$@")
     log_warning "Missing required packages. Installing: ${missing_packages[*]}"
@@ -349,6 +349,7 @@ install_missing_packages() {
     fi
 }
 
+# Handle GUI installation for Debian-based systems
 handle_gui_installation_debian() {
     local missing_packages=("$@")
     if ! zenity --question \
@@ -369,6 +370,7 @@ handle_gui_installation_debian() {
     (bash "$askpass_script" &)
 }
 
+# Handle GUI installation for Arch-based systems
 handle_gui_installation_arch() {
     local missing_packages=("$@")
     if ! zenity --question \
@@ -389,9 +391,7 @@ handle_gui_installation_arch() {
     (bash "$askpass_script" &)
 }
 
-# Similar functions for other package managers (fedora, nixos, gentoo, opensuse, void) can be added here.
-
-# 6. Argument Parsing Functions
+# Argument parsing function to handle command-line options
 parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -452,6 +452,7 @@ parse_arguments() {
     done
 }
 
+# Reset the settings file
 handle_reset() {
     if [[ -f "$SETTINGS_FILE" ]]; then
         rm "$SETTINGS_FILE"
@@ -461,6 +462,7 @@ handle_reset() {
     fi
 }
 
+# Handle custom URL input
 handle_custom_url() {
     local custom_url="$1"
     if [[ -n "$custom_url" ]]; then
@@ -474,11 +476,13 @@ handle_custom_url() {
     fi
 }
 
+# Handle the save option for screenshots
 handle_save_option() {
     save_enabled=true
     save_directory=$(get_save_directory)
 }
 
+# Get the directory to save screenshots
 get_save_directory() {
     local dir
     dir=$(get_saved_value "$SAVE_DIR_SETTING")
@@ -523,6 +527,7 @@ get_save_directory() {
     return 0
 }
 
+# Save the screenshot to the specified directory
 save_screenshot() {
     if [[ "$save_enabled" == "true" ]]; then
         # Get current month and year
@@ -547,6 +552,7 @@ save_screenshot() {
     fi
 }
 
+# Display help information for the script
 display_help() {
     cat << EOF
 hyprupld - Screenshot and Upload Utility
@@ -586,7 +592,7 @@ https://github.com/PhoenixAceVFX/hyprupld
 EOF
 }
 
-# 7. Screenshot Functions
+# Take a screenshot based on the desktop environment
 take_screenshot() {
     log_step "Taking screenshot based on desktop environment: $desktop_env"
     
@@ -621,6 +627,7 @@ take_screenshot() {
     verify_screenshot
 }
 
+# Take a screenshot in Wayland environments
 take_wayland_screenshot() {
     if [[ "$desktop_env" == *"hyprland"* ]]; then
         log_info "Using hyprshot for Hyprland environment"
@@ -632,6 +639,7 @@ take_wayland_screenshot() {
     play_sound "$SCREENSHOT_SOUND"
 }
 
+# Take a screenshot in KDE environments
 take_kde_screenshot() {
     log_info "Detected KDE environment"
     local tool
@@ -646,6 +654,7 @@ take_kde_screenshot() {
     fi
 }
 
+# Take a screenshot in XFCE environments
 take_xfce_screenshot() {
     local tool
     tool=$(get_screenshot_tool "xfce" "XFCE4-Screenshooter" "Flameshot")
@@ -659,6 +668,7 @@ take_xfce_screenshot() {
     fi
 }
 
+# Take a screenshot in GNOME environments
 take_gnome_screenshot() {
     local tool
     tool=$(get_screenshot_tool "gnome" "GNOME-Screenshot" "Flameshot")
@@ -672,6 +682,7 @@ take_gnome_screenshot() {
     fi
 }
 
+# Take a screenshot in Cinnamon environments
 take_cinnamon_screenshot() {
     local tool
     tool=$(get_screenshot_tool "cinnamon" "GNOME-Screenshot" "Flameshot")
@@ -685,11 +696,13 @@ take_cinnamon_screenshot() {
     fi
 }
 
+# Take a screenshot in Deepin environments
 take_deepin_screenshot() {
     deepin-screenshot -s "$SCREENSHOT_FILE"
     play_sound "$SCREENSHOT_SOUND"
 }
 
+# Take a screenshot in MATE environments
 take_mate_screenshot() {
     local tool
     tool=$(get_screenshot_tool "mate" "MATE-Screenshot" "Flameshot")
@@ -703,6 +716,7 @@ take_mate_screenshot() {
     fi
 }
 
+# Get the preferred screenshot tool for the specified desktop environment
 get_screenshot_tool() {
     local de="$1"
     local default_tool="$2"
@@ -724,6 +738,7 @@ get_screenshot_tool() {
     echo "$tool"
 }
 
+# Verify that the screenshot was successfully taken
 verify_screenshot() {
     if [[ ! -f "$SCREENSHOT_FILE" ]]; then
         log_error "Failed to take screenshot"
@@ -733,7 +748,7 @@ verify_screenshot() {
     return 0
 }
 
-# 8. Upload Functions
+# Handle the upload process for the screenshot
 handle_upload() {
     # Save the screenshot if -s option was used
     save_screenshot
@@ -745,6 +760,7 @@ handle_upload() {
     fi
 }
 
+# Upload the screenshot to the specified service
 upload_screenshot() {
     local firefox_version
     firefox_version=$(firefox --version | awk '{print $3}')
@@ -765,6 +781,7 @@ upload_screenshot() {
     esac
 }
 
+# Upload the screenshot to guns.lol
 upload_to_guns() {
     local response
     response=$(curl -s -X POST \
@@ -775,6 +792,7 @@ upload_to_guns() {
     process_upload_response
 }
 
+# Upload the screenshot to fakecrime.bio
 upload_to_fakecrime() {
     local image_url
     image_url=$(curl -X POST \
@@ -790,6 +808,7 @@ upload_to_fakecrime() {
     copy_url_to_clipboard "$image_url"
 }
 
+# Upload the screenshot to a generic service
 upload_to_generic_service() {
     local response
     response=$(curl -s -X POST "$url" \
@@ -802,6 +821,7 @@ upload_to_generic_service() {
     process_upload_response
 }
 
+# Process the response from the upload service
 process_upload_response() {
     if [[ ! -f "$UPLOAD_RESPONSE" ]]; then
         log_error "Failed to get upload response"
@@ -815,15 +835,23 @@ process_upload_response() {
         "guns") json_key=".link" ;;
         "ez") json_key=".imageUrl" ;;
         "atumsworld") json_key=".files[0].url" ;;
+        "fakecrime") json_key=".url" ;;
         *) json_key=".resource" ;;
     esac
     
     local url
     url=$(jq -r "$json_key" "$UPLOAD_RESPONSE")
+    
+    # Check if the URL is empty or null
+    if [[ -z "$url" || "$url" == "null" ]]; then
+        log_error "Failed to extract URL from upload response for service: $service"
+        return 1
+    fi
+    
     copy_url_to_clipboard "$url"
 }
 
-# Add this helper function near the other utility functions
+# Detect the display server (Wayland or X11)
 detect_display_server() {
     if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
         echo "wayland"
@@ -834,7 +862,7 @@ detect_display_server() {
     fi
 }
 
-# Update the clipboard functions
+# Copy the screenshot to the clipboard
 copy_to_clipboard() {
     log_step "Copying screenshot to clipboard"
     
@@ -873,6 +901,7 @@ copy_to_clipboard() {
     return 0
 }
 
+# Copy a URL to the clipboard
 copy_url_to_clipboard() {
     local url="$1"
     local display_server
@@ -910,7 +939,7 @@ copy_url_to_clipboard() {
     play_sound "$LINK_SOUND"
 }
 
-# 9. Authentication Functions
+# Retrieve the authentication key for the specified service
 get_authentication() {
     local service="$1"
     log_step "Retrieving authentication key for $service"
@@ -928,9 +957,10 @@ get_authentication() {
     fi
 }
 
-# 10. Initialization Functions
+# Initialize the script by checking requirements and setting up the environment
 initialize_script() {
     check_system_requirements
+    check_python  # Check for Python installation
     ensure_config_dir
     ensure_sound_files
     validate_config
@@ -945,14 +975,14 @@ initialize_script() {
     check_dependencies
 }
 
-# 11. Main Function
+# Main function to execute the script
 main() {
     # Ensure the config directory exists
     mkdir -p "$CONFIG_DIR"  # Ensure the config directory exists
     : > "$CONFIG_DIR/debug.log"  # Clear the debug.log file
     exec > >(tee -a "$CONFIG_DIR/debug.log") 2>&1  # Redirect output to debug.log
     
-    # Add this line before parse_arguments
+    # Initialize flags for saving and muting
     save_enabled=false
     mute_enabled=false
     silent_enabled=false
@@ -971,7 +1001,7 @@ main() {
     return 0
 }
 
-# Add these new functions near the other function definitions
+# Handle updates for the script
 handle_update() {
     if [[ ! -d "$HOME/hyprupld" ]]; then
         log_info "hyprupld source directory not found, cloning repository..."
@@ -1005,6 +1035,7 @@ handle_update() {
     exit 0
 }
 
+# Prompt the user for an update if available
 prompt_for_update() {
     if zenity --question \
         --title="Update Available" \
@@ -1016,7 +1047,7 @@ prompt_for_update() {
     fi
 }
 
-# Update the print_version function
+# Print the version of the script and check for updates
 print_version() {
     echo "$VERSION"
     
@@ -1061,7 +1092,7 @@ print_version() {
     exit 0
 }
 
-# Update the play_sound function calls
+# Play a sound file if not muted
 play_sound() {
     if [[ "$mute_enabled" == "true" || "$silent_enabled" == "true" ]]; then
         return 0
@@ -1089,6 +1120,7 @@ play_sound() {
     fi
 }
 
+# Call the fyi function for notifications
 fyi_call() {
     if [[ "$silent_enabled" == "true" ]]; then
         return 0 
@@ -1097,7 +1129,7 @@ fyi_call() {
     fyi "$1" "$2"
 }
 
-# Add this to the initialization section
+# Ensure sound files exist in the specified directory
 ensure_sound_files() {
     # Create sounds directory if it doesn't exist
     if [[ ! -d "$SOUND_DIR" ]]; then
@@ -1115,6 +1147,14 @@ ensure_sound_files() {
             log_info "Copied sound file: ${sound}"
         fi
     done
+}
+
+# Function to check if Python is installed
+check_python() {
+    if ! command -v python3 &> /dev/null; then
+        log_error "Python 3 is not installed. Please install Python 3 to use this script."
+        exit 1
+    fi
 }
 
 #==============================================================================
