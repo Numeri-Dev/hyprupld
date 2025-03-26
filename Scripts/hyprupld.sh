@@ -1006,7 +1006,7 @@ handle_update() {
     if [[ ${#hyprupld_pids[@]} -gt 0 ]]; then
         log_warning "Found running hyprupld processes, stopping them for update..."
         for pid in "${hyprupld_pids[@]}"; do
-            if kill -0 "$pid" 2>/dev/null; then
+            if [[ "$pid" -ne $$ ]] && kill -0 "$pid" 2>/dev/null; then  # Skip the current process
                 log_info "Stopping hyprupld process: $pid"
                 kill "$pid"
             fi
