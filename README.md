@@ -194,7 +194,7 @@ To install:
 * [wl-clipboard](https://github.com/bugaevc/wl-clipboard) - Command line interface to Wayland selections (Clipboard)
 * [fyi](https://github.com/Macchina-CLI/fyi) - Minimal desktop notifications
 * [zenity](https://gitlab.gnome.org/GNOME/zenity) - Display graphical dialog boxes from shell scripts
-* [jq](https://github.com/stedolan/jq) - Lightweight command-line JSON processor
+* [python](https://github.com/python) - Replacing JQ as a JSON Processor
 * [grimblast](https://github.com/hyprwm/contrib) - Screenshot utility for Hyprland
 
 ### Screenshot Tools
