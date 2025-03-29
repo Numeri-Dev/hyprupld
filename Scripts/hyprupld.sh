@@ -988,37 +988,12 @@ initialize_script() {
     check_dependencies
 }
 
-# Check for running instances of hyprupld
-check_running_instances() {
-    local running_instances
-    running_instances=$(pgrep -c hyprupld)
-
-    if [[ "$running_instances" -gt 0 ]]; then
-        if zenity --question --title="Instance Running" --text="Another instance of hyprupld is currently running. Do you want to kill it and continue?" --width=300; then
-            # Kill the current instance
-            pkill -f hyprupld
-            log_info "Killed the running instance of hyprupld."
-        else
-            if zenity --question --title="Kill All Instances" --text="Do you want to kill all running instances of hyprupld?" --width=300; then
-                pkill -f hyprupld
-                log_info "Killed all running instances of hyprupld."
-            else
-                log_warning "User chose not to kill any instances. Exiting."
-                exit 1
-            fi
-        fi
-    fi
-}
-
 # Main function to execute the script
 main() {
     # Ensure the config directory exists
     mkdir -p "$CONFIG_DIR"  # Ensure the config directory exists
     : > "$CONFIG_DIR/debug.log"  # Clear the debug.log file
     exec > >(tee -a "$CONFIG_DIR/debug.log") 2>&1  # Redirect output to debug.log
-
-    # Check for running instances of hyprupld
-    check_running_instances
 
     # Initialize flags for saving and muting
     save_enabled=false
@@ -1096,38 +1071,18 @@ print_version() {
     
     # Get latest release info from GitHub
     log_info "Checking for updates..."
-    latest_release=$(curl -s "$GITHUB_API_URL")
+    latest_release=$(curl -s "$GITHUB_API_URL" | tr -d '\r' | tr -d '\n')
+    log_info "Raw response from GitHub API: $latest_release"
+
+    # Attempt to extract the published date
+    latest_date=$(python3 -c "import json; print(json.loads('''$latest_release''')['published_at'])" 2>/dev/null)
     
-    if [[ -n "$latest_release" ]]; then
-        # Extract the published date from the latest release
-        latest_date=$(python3 -c "import json; print(json.loads('''$latest_release''')['published_at'])")
-        
-        if [[ -n "$latest_date" && "$latest_date" != "null" ]]; then
-            # Convert GitHub ISO 8601 date to comparable format (YYYYMMDDHHMMSS)
-            latest_datetime=$(date -d "$latest_date" +%Y%m%d%H%M%S)
-            
-            # Get local version date (assuming version format hyprupld-YYYYMMDD-HHMMSS)
-            if [[ "$VERSION" =~ ^hyprupld-([0-9]{8})-([0-9]{6})$ ]]; then
-                local_datetime="${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
-                
-                # Compare timestamps
-                if (( local_datetime >= latest_datetime )); then
-                    log_success "You are running the latest version"
-                else
-                    log_warning "A newer version is available"
-                    prompt_for_update
-                fi
-            else
-                log_warning "Invalid local version format: $VERSION"
-            fi
-        else
-            log_warning "Could not determine latest release date"
-        fi
-    else
-        log_warning "Could not check for updates - GitHub API request failed"
+    if [[ $? -ne 0 ]]; then
+        log_error "Failed to decode JSON response from GitHub API."
+        exit 1
     fi
-    
-    exit 0
+
+    # Continue with the rest of the version checking logic...
 }
 
 # Play a sound file if not muted
