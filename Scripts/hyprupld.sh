@@ -200,7 +200,7 @@ check_display_server() {
 
 # Check for basic dependencies required by the script
 check_basic_dependencies() {
-    local basic_deps=("curl" "jq")
+    local basic_deps=("curl" "python3")
     local missing=()
     
     for dep in "${basic_deps[@]}"; do
@@ -239,7 +239,7 @@ detect_package_managers() {
         fi
     done
 
-    printf '%s\n' "${detected_managers[@]}" | jq -R . | jq -s . > "$PCKMGRS_FILE"
+    printf '%s\n' "${detected_managers[@]}" | python3 -c "import sys, json; json.dump(sys.stdin.read().splitlines(), sys.stdout)" > "$PCKMGRS_FILE"
     log_success "Detected package managers: ${detected_managers[*]}"
     echo "${detected_managers[@]}"
 }
@@ -248,7 +248,7 @@ detect_package_managers() {
 get_package_managers() {
     if [[ -f "$PCKMGRS_FILE" ]]; then
         log_info "Using cached package manager information"
-        jq -r '.[]' "$PCKMGRS_FILE"
+        python3 -c "import json; print(json.load(open('$PCKMGRS_FILE')))"
     else
         log_info "No cached package manager information found, detecting..."
         detect_package_managers
@@ -258,7 +258,7 @@ get_package_managers() {
 # Check for required tools and dependencies
 check_dependencies() {
     log_step "Checking for required tools"
-    local required_packages=("zenity" "jq" "xclip" "fyi")
+    local required_packages=("zenity" "python3" "xclip" "fyi")
     local audio_packages=("pulseaudio-utils" "sox" "alsa-utils" "mpg123")
     local missing_packages=()
     local has_audio_player=false
@@ -308,7 +308,7 @@ install_missing_packages() {
     # Install missing packages if any
     if [[ ${#missing_packages[@]} -gt 0 ]]; then
         local package_managers
-        mapfile -t package_managers < <(get_package_managers)
+        mapfile -t package_managers < <(python3 -c "import json; print(json.load(open('$PCKMGRS_FILE')))")
         for manager in "${package_managers[@]}"; do
             case "$manager" in
                 "arch")
@@ -840,7 +840,7 @@ process_upload_response() {
     esac
     
     local url
-    url=$(jq -r "$json_key" "$UPLOAD_RESPONSE")
+    url=$(python3 -c "import json; print(${json_key})" < "$UPLOAD_RESPONSE")
     
     # Check if the URL is empty or null
     if [[ -z "$url" || "$url" == "null" ]]; then
@@ -873,7 +873,10 @@ copy_to_clipboard() {
         "wayland")
             if command -v wl-copy &> /dev/null; then
                 log_info "Using wl-copy for Wayland clipboard operations"
-                cat "$SCREENSHOT_FILE" | wl-copy
+                if ! cat "$SCREENSHOT_FILE" | wl-copy; then
+                    log_error "Failed to copy screenshot to clipboard using wl-copy"
+                    return 1
+                fi
                 clipboard_content=$(wl-paste 2>&1 | tr -d '\0')
             else
                 log_error "wl-copy not found. Please install wl-clipboard"
@@ -883,7 +886,10 @@ copy_to_clipboard() {
         "x11")
             if command -v xclip &> /dev/null; then
                 log_info "Using xclip for X11 clipboard operations"
-                xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"
+                if ! xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"; then
+                    log_error "Failed to copy screenshot to clipboard using xclip"
+                    return 1
+                fi
             else
                 log_error "xclip not found. Please install xclip"
                 return 1
@@ -1062,7 +1068,7 @@ print_version() {
     
     if [[ -n "$latest_release" ]]; then
         # Extract the published date from the latest release
-        latest_date=$(echo "$latest_release" | jq -r '.published_at')
+        latest_date=$(python3 -c "import json; print(json.loads('''$latest_release''')['published_at'])")
         
         if [[ -n "$latest_date" && "$latest_date" != "null" ]]; then
             # Convert GitHub ISO 8601 date to comparable format (YYYYMMDDHHMMSS)
