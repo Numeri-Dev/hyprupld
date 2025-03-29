@@ -77,6 +77,7 @@ Options:
   -update        Check for and install updates
   -mute          Mute sound feedback
   -silent        Silent mode (no sound or notification)
+  -kill          Kill all running instances of hyprupld
 ```
 
 > **Note:** If no service is selected, the file will be copied to the clipboard.

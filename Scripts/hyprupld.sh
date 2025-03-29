@@ -431,6 +431,12 @@ parse_arguments() {
                 mute_enabled=true
                 shift
                 ;;
+            -kill)
+                log_info "Killing all running instances of hyprupld..."
+                pkill -f hyprupld
+                log_success "All running instances of hyprupld have been killed."
+                exit 0
+                ;;
             -*)
                 local service_name="${1#-}"
                 if [[ -n "${SERVICES[$service_name]:-}" ]]; then
@@ -569,6 +575,7 @@ Options:
   -update          Update hyprupld to the latest version
   -mute            Mute sound feedback
   -silent          Silent mode (no sound or notification)
+  -kill            Kill all running instances of hyprupld
 
 Screenshot Services:
   -guns            Use guns.lol
@@ -981,13 +988,38 @@ initialize_script() {
     check_dependencies
 }
 
+# Check for running instances of hyprupld
+check_running_instances() {
+    local running_instances
+    running_instances=$(pgrep -c hyprupld)
+
+    if [[ "$running_instances" -gt 0 ]]; then
+        if zenity --question --title="Instance Running" --text="Another instance of hyprupld is currently running. Do you want to kill it and continue?" --width=300; then
+            # Kill the current instance
+            pkill -f hyprupld
+            log_info "Killed the running instance of hyprupld."
+        else
+            if zenity --question --title="Kill All Instances" --text="Do you want to kill all running instances of hyprupld?" --width=300; then
+                pkill -f hyprupld
+                log_info "Killed all running instances of hyprupld."
+            else
+                log_warning "User chose not to kill any instances. Exiting."
+                exit 1
+            fi
+        fi
+    fi
+}
+
 # Main function to execute the script
 main() {
     # Ensure the config directory exists
     mkdir -p "$CONFIG_DIR"  # Ensure the config directory exists
     : > "$CONFIG_DIR/debug.log"  # Clear the debug.log file
     exec > >(tee -a "$CONFIG_DIR/debug.log") 2>&1  # Redirect output to debug.log
-    
+
+    # Check for running instances of hyprupld
+    check_running_instances
+
     # Initialize flags for saving and muting
     save_enabled=false
     mute_enabled=false
