@@ -1081,15 +1081,22 @@ print_version() {
     latest_release=$(curl -s "$GITHUB_API_URL" | tr -d '\r' | tr -d '\n')
     log_info "Raw response from GitHub API: $latest_release"
 
-    # Attempt to extract the published date
-    latest_date=$(python3 -c "import json; print(json.loads('''$latest_release''')['published_at'])" 2>/dev/null)
+    # Attempt to extract the published date and version
+    latest_date=$(python3 -c "import json; print(json.loads('''$latest_release''')['created_at'])" 2>/dev/null)
+    latest_version=$(python3 -c "import json; print(json.loads('''$latest_release''')['tag_name'])" 2>/dev/null)
     
     if [[ $? -ne 0 ]]; then
         log_error "Failed to decode JSON response from GitHub API."
         exit 1
     fi
 
-    # Continue with the rest of the version checking logic...
+    # Compare versions and prompt for update if necessary
+    if [[ "$latest_version" != "$VERSION" ]]; then
+        log_info "A newer version ($latest_version) is available. Your current version is $VERSION."
+        prompt_for_update
+    else
+        log_info "You are using the latest version: $VERSION"
+    fi
 }
 
 # Play a sound file if not muted
