@@ -884,7 +884,10 @@ copy_to_clipboard() {
                     log_error "Failed to copy screenshot to clipboard using wl-copy"
                     return 1
                 fi
-                log_info "Direct image copied to clipboard."
+                # Get image size and resolution
+                local image_info
+                image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
+                log_info "Direct image copied to clipboard. $image_info"
             else
                 log_error "wl-copy not found. Please install wl-clipboard"
                 return 1
@@ -897,7 +900,10 @@ copy_to_clipboard() {
                     log_error "Failed to copy screenshot to clipboard using xclip"
                     return 1
                 fi
-                log_info "Direct image copied to clipboard."
+                # Get image size and resolution
+                local image_info
+                image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
+                log_info "Direct image copied to clipboard. $image_info"
             else
                 log_error "xclip not found. Please install xclip"
                 return 1
