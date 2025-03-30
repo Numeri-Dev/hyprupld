@@ -837,17 +837,17 @@ process_upload_response() {
 
     local json_key
     case "$service" in
-        "pixelvault") json_key=".resource" ;;
-        "nest") json_key=".fileURL" ;;
-        "guns") json_key=".link" ;;
-        "ez") json_key=".imageUrl" ;;
-        "atumsworld") json_key=".files[0].url" ;;
-        "fakecrime") json_key=".url" ;;
-        *) json_key=".resource" ;;
+        "pixelvault") json_key="resource" ;;
+        "nest") json_key="fileURL" ;;
+        "guns") json_key="link" ;;
+        "ez") json_key="imageUrl" ;;
+        "atumsworld") json_key="files[0].url" ;;
+        "fakecrime") json_key="url" ;;
+        *) json_key="resource" ;;
     esac
     
     local url
-    url=$(python3 -c "import json; print(${json_key})" < "$UPLOAD_RESPONSE")
+    url=$(python3 -c "import json; print(json.load(open('$UPLOAD_RESPONSE')).get('$json_key', ''))")
     
     # Check if the URL is empty or null
     if [[ -z "$url" || "$url" == "null" ]]; then
