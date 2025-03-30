@@ -884,7 +884,7 @@ copy_to_clipboard() {
                     log_error "Failed to copy screenshot to clipboard using wl-copy"
                     return 1
                 fi
-                clipboard_content=$(wl-paste 2>&1 | tr -d '\0')
+                log_info "Direct image copied to clipboard."
             else
                 log_error "wl-copy not found. Please install wl-clipboard"
                 return 1
@@ -897,6 +897,7 @@ copy_to_clipboard() {
                     log_error "Failed to copy screenshot to clipboard using xclip"
                     return 1
                 fi
+                log_info "Direct image copied to clipboard."
             else
                 log_error "xclip not found. Please install xclip"
                 return 1
