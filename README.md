@@ -139,6 +139,7 @@ HyprUpld works seamlessly with various desktop environments:
 - Openbox
 - MATE
 - Sway
+- Cosmic
 
 ---
 
