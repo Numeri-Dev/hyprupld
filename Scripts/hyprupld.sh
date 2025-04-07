@@ -46,7 +46,6 @@ declare -A SERVICES=(
     ["ez"]="https://api.e-z.host/files|key"
     ["fakecrime"]="https://upload.fakecrime.bio|Authorization"
     ["nest"]="https://nest.rip/api/files/upload|Authorization"
-    ["atumsworld"]="https://atums.world/api/upload|authorization"
 )
 
 # Add to the configuration section near other readonly variables
@@ -437,6 +436,17 @@ parse_arguments() {
                 log_success "All running instances of hyprupld have been killed."
                 exit 0
                 ;;
+            -zipline)
+                if [[ $# -lt 3 ]]; then
+                    log_error "Zipline usage: -zipline <base_url> <authorization>"
+                    exit 1
+                fi
+                service="zipline"
+                url="${2%/}/api/upload"  # Remove trailing slash if present and append /api/upload
+                auth="$3"
+                auth_header="authorization"
+                shift 3
+                ;;
             -*)
                 local service_name="${1#-}"
                 if [[ -n "${SERVICES[$service_name]:-}" ]]; then
@@ -583,7 +593,7 @@ Screenshot Services:
   -fakecrime       Use fakecri.me
   -nest            Use nest.rip
   -pixelvault      Use pixelvault.co
-  -atumsworld      Use atums.world
+  -zipline         Use a custom Zipline instance
 
 Environment Variables:
   HYPRUPLD_CONFIG  Override default config directory
@@ -593,6 +603,7 @@ Examples:
   hyprupld -guns              # Take screenshot and upload to guns.lol
   hyprupld                    # Take screenshot and copy to clipboard
   hyprupld -u https://example.com/upload  # Use custom upload URL
+  hyprupld -zipline https://example.com myauthkey  # Use custom Zipline instance
 
 For more information and updates, visit:
 https://github.com/PhoenixAceVFX/hyprupld
@@ -841,7 +852,7 @@ process_upload_response() {
         "nest") json_key="fileURL" ;;
         "guns") json_key="link" ;;
         "ez") json_key="imageUrl" ;;
-        "atumsworld") json_key="files[0].url" ;;
+        "zipline") json_key="files[0].url" ;;
         "fakecrime") json_key="url" ;;
         *) json_key="resource" ;;
     esac
