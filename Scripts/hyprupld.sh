@@ -636,6 +636,9 @@ take_screenshot() {
         *"mate"*)
             take_mate_screenshot
             ;;
+        *"cosmic"*)
+            take_cosmic_screenshot
+            ;;
         *)
             log_error "Unsupported desktop environment: $desktop_env"
             return 1
@@ -727,6 +730,20 @@ take_mate_screenshot() {
     
     if [[ "$tool" == "MATE-Screenshot" ]]; then
         mate-screenshot -a -f "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
+    else
+        flameshot gui -p "$SCREENSHOT_FILE"
+        play_sound "$SCREENSHOT_SOUND"
+    fi
+}
+
+# Take a screenshot in Cosmic environments
+take_cosmic_screenshot() {
+    local tool
+    tool=$(get_screenshot_tool "cosmic" "GNOME-Screenshot" "Flameshot")
+    
+    if [[ "$tool" == "GNOME-Screenshot" ]]; then
+        gnome-screenshot -a -f "$SCREENSHOT_FILE"
         play_sound "$SCREENSHOT_SOUND"
     else
         flameshot gui -p "$SCREENSHOT_FILE"
