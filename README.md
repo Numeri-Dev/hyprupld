@@ -47,12 +47,12 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/m
 
 HyprUpld supports uploading to multiple services:
 
-- [atums.world](https://atums.world)
 - [e-z.host](https://e-z.host)
 - [fakecri.me](https://fakecri.me)
 - [guns.lol](https://guns.lol)
 - [nest.rip](https://nest.rip)
 - [pixelvault.co](https://pixelvault.co)
+- **Zipline instances** (self-hosted image hosting)
 - **Custom URL support** (see [wiki](https://github.com/PhoenixAceVFX/hyprupld/wiki) for instructions)
 
 ### Command Line Options
@@ -63,12 +63,12 @@ HyprUpld offers various command-line options for flexibility:
 Usage: hyprupld [OPTIONS]
 
 Options:
-  -atumsworld    Use atums.world
   -ez            Use e-z.host
   -fakecrime     Use fakecri.me
   -guns          Use guns.lol
   -nest          Use nest.rip
   -pixelvault    Use pixelvault.co
+  -zipline       Use a custom Zipline instance
   -h, --help     Show this help message
   -reset         Reset all settings
   -u, --url URL  Set custom upload URL
@@ -78,6 +78,12 @@ Options:
   -mute          Mute sound feedback
   -silent        Silent mode (no sound or notification)
   -kill          Kill all running instances of hyprupld
+
+Examples:
+  hyprupld -guns                                    # Upload to guns.lol
+  hyprupld                                         # Copy to clipboard
+  hyprupld -u https://example.com/upload           # Use custom upload URL
+  hyprupld -zipline https://example.com myauthkey  # Use custom Zipline instance
 ```
 
 > **Note:** If no service is selected, the file will be copied to the clipboard.
