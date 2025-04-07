@@ -402,10 +402,6 @@ parse_arguments() {
                 handle_reset
                 exit 0
                 ;;
-            -u|--url)
-                handle_custom_url "$2" || exit 1
-                shift 2
-                ;;
             -h|--help)
                 display_help
                 exit 0
@@ -475,20 +471,6 @@ handle_reset() {
         log_success "Settings file has been reset"
     else
         log_warning "No settings file found to reset"
-    fi
-}
-
-# Handle custom URL input
-handle_custom_url() {
-    local custom_url="$1"
-    if [[ -n "$custom_url" ]]; then
-        url="$custom_url"
-        service="custom"
-        auth_header="Authorization"
-        return 0
-    else
-        log_error "URL argument is missing"
-        return 1
     fi
 }
 
@@ -580,7 +562,8 @@ Options:
   -v, --version    Display version information
   -debug           Enable debug mode with strict error handling
   -reset           Reset all settings and start fresh
-  -u, --url URL    Set a custom upload URL
+  -h|--help        Show this help message
+  -v|--version     Display version information
   -s, --save       Save screenshots to a specified directory
   -update          Update hyprupld to the latest version
   -mute            Mute sound feedback
@@ -602,7 +585,6 @@ Environment Variables:
 Examples:
   hyprupld -guns              # Take screenshot and upload to guns.lol
   hyprupld                    # Take screenshot and copy to clipboard
-  hyprupld -u https://example.com/upload  # Use custom upload URL
   hyprupld -zipline https://example.com myauthkey  # Use custom Zipline instance
 
 For more information and updates, visit:
