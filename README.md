@@ -53,7 +53,6 @@ HyprUpld supports uploading to multiple services:
 - [nest.rip](https://nest.rip)
 - [pixelvault.co](https://pixelvault.co)
 - **Zipline instances** (self-hosted image hosting)
-- **Custom URL support** (see [wiki](https://github.com/PhoenixAceVFX/hyprupld/wiki) for instructions)
 
 ### Command Line Options
 
