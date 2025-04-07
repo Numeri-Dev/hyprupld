@@ -443,6 +443,17 @@ parse_arguments() {
                 auth_header="authorization"
                 shift 3
                 ;;
+            -xbackbone)
+                if [[ $# -lt 3 ]]; then
+                    log_error "XBackbone usage: -xbackbone <base_url> <token>"
+                    exit 1
+                fi
+                service="xbackbone"
+                url="${2%/}/upload"  # Remove trailing slash if present and append /upload
+                auth="$3"
+                auth_header="token"
+                shift 3
+                ;;
             -*)
                 local service_name="${1#-}"
                 if [[ -n "${SERVICES[$service_name]:-}" ]]; then
@@ -852,6 +863,7 @@ process_upload_response() {
         "guns") json_key="link" ;;
         "ez") json_key="imageUrl" ;;
         "zipline") json_key="files[0].url" ;;
+        "xbackbone") json_key="upload" ;;
         "fakecrime") json_key="url" ;;
         *) json_key="resource" ;;
     esac

@@ -53,6 +53,7 @@ HyprUpld supports uploading to multiple services:
 - [nest.rip](https://nest.rip)
 - [pixelvault.co](https://pixelvault.co)
 - **Zipline instances** (self-hosted image hosting)
+- **XBackbone instances** (self-hosted image hosting)
 
 ### Command Line Options
 
@@ -68,6 +69,7 @@ Options:
   -nest          Use nest.rip
   -pixelvault    Use pixelvault.co
   -zipline       Use a custom Zipline instance
+  -xbackbone     Use a custom XBackbone instance
   -h, --help     Show this help message
   -reset         Reset all settings
   -s, --save     Save screenshots locally in organized folders
@@ -82,6 +84,7 @@ Examples:
   hyprupld -guns                                    # Upload to guns.lol
   hyprupld                                         # Copy to clipboard
   hyprupld -zipline https://example.com myauthkey  # Use custom Zipline instance
+  hyprupld -xbackbone https://example.com mytoken   # Use custom XBackbone instance
 ```
 
 > **Note:** If no service is selected, the file will be copied to the clipboard.
