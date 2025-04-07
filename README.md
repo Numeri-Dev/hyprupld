@@ -71,18 +71,17 @@ Options:
   -zipline       Use a custom Zipline instance
   -h, --help     Show this help message
   -reset         Reset all settings
-  -u, --url URL  Set custom upload URL
   -s, --save     Save screenshots locally in organized folders
   -v, --version  Display the current version
   -update        Check for and install updates
   -mute          Mute sound feedback
   -silent        Silent mode (no sound or notification)
   -kill          Kill all running instances of hyprupld
+  -debug         Enable debug mode with strict error handling
 
 Examples:
   hyprupld -guns                                    # Upload to guns.lol
   hyprupld                                         # Copy to clipboard
-  hyprupld -u https://example.com/upload           # Use custom upload URL
   hyprupld -zipline https://example.com myauthkey  # Use custom Zipline instance
 ```
 
