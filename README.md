@@ -6,7 +6,7 @@
 ![Bash Script](https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![Neovim](https://img.shields.io/badge/NeoVim-%2357A143.svg?&style=for-the-badge&logo=neovim&logoColor=white)
 
-**A versatile screenshot and file upload utility for Linux with multi-platform support**
+**A versatile screenshot and file upload utility for Linux and MacOS (experimental) with multi-platform support**
 
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://github.com/PhoenixAceVFX/hyprupld/blob/main/LICENSE)
 [![Latest Release](https://img.shields.io/github/v/release/PhoenixAceVFX/hyprupld)](https://github.com/PhoenixAceVFX/hyprupld/releases)
@@ -128,9 +128,16 @@ Use `-reset` to clear all saved settings and start fresh.
 
 ---
 
-## Desktop Environment Support
+## Platform and Desktop Environment Support
 
-HyprUpld works seamlessly with various desktop environments:
+### Operating Systems
+- Linux (Primary support)
+- macOS (Experimental)
+  - Built-in screencapture tool
+  - Third-party tools: CleanShot X, Xsnapper
+
+### Desktop Environments
+HyprUpld works seamlessly with various Linux desktop environments:
 
 - KDE Plasma
 - Hyprland
@@ -163,7 +170,7 @@ Installation is supported on systems using:
 
 ## About
 
-HyprUpld is an all-in-one Linux screenshot tool designed to streamline the process of capturing and uploading screenshots across various platforms.
+HyprUpld is an all-in-one screenshot tool designed to streamline the process of capturing and uploading screenshots across Linux and macOS (experimental) platforms.
 
 For more information, visit the [official website](https://hyprupld.space).
 
@@ -206,7 +213,8 @@ To install:
 * [fyi](https://github.com/Macchina-CLI/fyi) - Minimal desktop notifications
 * [zenity](https://gitlab.gnome.org/GNOME/zenity) - Display graphical dialog boxes from shell scripts
 * [python](https://github.com/python) - Replacing JQ as a JSON Processor
-* [grimblast](https://github.com/hyprwm/contrib) - Screenshot utility for Hyprland
+* [sips](https://developer.apple.com/documentation/sips) - Command line tool for macOS
+* [osascript](https://developer.apple.com/documentation/appscript) - Command line tool for macOS
 
 ### Screenshot Tools
 * [grimblast](https://github.com/hyprwm/contrib) - For Sway and i3
@@ -218,6 +226,9 @@ To install:
 * [deepin-screenshot](https://github.com/linuxdeepin/deepin-screenshot) - For Deepin
 * [mate-screenshot](https://github.com/mate-desktop/mate-utils) - For MATE
 * [grim](https://github.com/emersion/grim) - For Sway
+* [screencapture](https://developer.apple.com/documentation/appkit/screencapture) - For macOS
+* [cleanshot](https://cleanshot.com) - For macOS
+* [xsnapper](https://xsnapper.com) - For macOS
 
 ## Issues and Support
 Please use the [Issues](../../issues) section to:

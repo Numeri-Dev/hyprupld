@@ -1,0 +1,113 @@
+name: Build and Release macOS Apps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Scripts/**'
+      - 'HyprUpld.png'
+      - 'compile.sh'
+      - 'install_scripts.sh'
+      - 'compile_macos.sh'
+      - 'install_scripts_macos.sh'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Required for changelog generation
+
+      - name: Install Dependencies
+        run: |
+          brew install imagemagick
+
+      - name: Make Scripts Executable
+        run: |
+          chmod +x compile_macos.sh
+          chmod +x install_scripts_macos.sh
+
+      - name: Build macOS Apps
+        run: |
+          ./compile_macos.sh
+
+      - name: Get Short SHA
+        id: sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Check Existing Release
+        id: check_release
+        run: |
+          # Try to get the release by tag
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.sha.outputs.sha }}")
+          
+          if [ "$STATUS" -eq "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            # Get release ID for the existing release
+            RELEASE_ID=$(curl -s \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.sha.outputs.sha }}" \
+              | jq -r .id)
+            echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        id: create_release
+        if: steps.check_release.outputs.exists != 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.sha.outputs.sha }}
+          release_name: Release ${{ steps.sha.outputs.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload macOS Apps to Existing Release
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          for app in Compiled/*.app; do
+            APP_NAME=$(basename "$app")
+            # Create a zip of the .app bundle
+            cd Compiled
+            zip -r "$APP_NAME.zip" "$APP_NAME"
+            cd ..
+            
+            # Upload to the existing release
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/zip" \
+              --data-binary @"Compiled/$APP_NAME.zip" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.check_release.outputs.release_id }}/assets?name=$APP_NAME.zip"
+          done
+
+      - name: Upload macOS Apps to New Release
+        if: steps.check_release.outputs.exists != 'true'
+        run: |
+          for app in Compiled/*.app; do
+            APP_NAME=$(basename "$app")
+            # Create a zip of the .app bundle
+            cd Compiled
+            zip -r "$APP_NAME.zip" "$APP_NAME"
+            cd ..
+            
+            # Upload to the new release
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/zip" \
+              --data-binary @"Compiled/$APP_NAME.zip" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$APP_NAME.zip"
+          done

@@ -185,9 +185,18 @@ with open('$temp_file', 'w') as f:
 # Check system requirements before running the script
 check_system_requirements() {
     # Check for unsupported operating systems
-    if grep -qi microsoft /proc/version 2>/dev/null; then
-        log_error "Windows WSL is not supported, HyprUpld is only compatible with Linux"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        os_type="macos"
+        log_info "Detected macOS system"
+        if [[ "$DEBUG" == "true" ]]; then
+            log_warning "MacOS Support is Experimental"
+        fi
+    elif grep -qi microsoft /proc/version 2>/dev/null; then
+        log_error "Windows WSL is not supported, HyprUpld is only compatible with Linux and MacOS"
         exit 1
+    else
+        os_type="linux"
+        log_info "Detected Linux system"
     fi
 
     check_display_server
@@ -622,38 +631,42 @@ EOF
 
 # Take a screenshot based on the desktop environment
 take_screenshot() {
-    log_step "Taking screenshot based on desktop environment: $desktop_env"
-    
-    case "$desktop_env" in
-        *"sway"*|*"hyprland"*|*"i3"*)
-            take_wayland_screenshot
-            ;;
-        *"kde"*)
-            take_kde_screenshot
-            ;;
-        *"xfce"*)
-            take_xfce_screenshot
-            ;;
-        *"gnome"*)
-            take_gnome_screenshot
-            ;;
-        *"cinnamon"*)
-            take_cinnamon_screenshot
-            ;;
-        *"deepin"*)
-            take_deepin_screenshot
-            ;;
-        *"mate"*)
-            take_mate_screenshot
-            ;;
-        *"cosmic"*)
-            take_cosmic_screenshot
-            ;;
-        *)
-            log_error "Unsupported desktop environment: $desktop_env"
-            return 1
-            ;;
-    esac
+    if [[ "$os_type" == "macos" ]]; then
+        take_macos_screenshot
+    else
+        log_step "Taking screenshot based on desktop environment: $desktop_env"
+        
+        case "$desktop_env" in
+            *"sway"*|*"hyprland"*|*"i3"*)
+                take_wayland_screenshot
+                ;;
+            *"kde"*)
+                take_kde_screenshot
+                ;;
+            *"xfce"*)
+                take_xfce_screenshot
+                ;;
+            *"gnome"*)
+                take_gnome_screenshot
+                ;;
+            *"cinnamon"*)
+                take_cinnamon_screenshot
+                ;;
+            *"deepin"*)
+                take_deepin_screenshot
+                ;;
+            *"mate"*)
+                take_mate_screenshot
+                ;;
+            *"cosmic"*)
+                take_cosmic_screenshot
+                ;;
+            *)
+                log_error "Unsupported desktop environment: $desktop_env"
+                return 1
+                ;;
+        esac
+    fi
 
     verify_screenshot
 }
@@ -730,6 +743,38 @@ take_cinnamon_screenshot() {
 # Take a screenshot in Deepin environments
 take_deepin_screenshot() {
     deepin-screenshot -s "$SCREENSHOT_FILE"
+    play_sound "$SCREENSHOT_SOUND"
+}
+
+# Take a screenshot in macOS
+take_macos_screenshot() {
+    local tool
+    tool=$(get_screenshot_tool "macos" "Built-in" "CleanShot X" "Xsnapper")
+    
+    case "$tool" in
+        "Built-in")
+            screencapture -i "$SCREENSHOT_FILE"
+            ;;
+        "CleanShot X")
+            if ! command -v cleanshot &> /dev/null; then
+                log_error "CleanShot X not found. Please install it from https://cleanshot.com"
+                return 1
+            fi
+            cleanshot capture --clipboard --save-path "$SCREENSHOT_FILE"
+            ;;
+        "Xsnapper")
+            if ! command -v xsnapper &> /dev/null; then
+                log_error "Xsnapper not found. Please install it from https://xsnapper.com"
+                return 1
+            fi
+            xsnapper capture --output "$SCREENSHOT_FILE"
+            ;;
+        *)
+            log_error "Invalid screenshot tool selected for macOS"
+            return 1
+            ;;
+    esac
+    
     play_sound "$SCREENSHOT_SOUND"
 }
 
@@ -963,47 +1008,57 @@ detect_display_server() {
 copy_to_clipboard() {
     log_step "Copying screenshot to clipboard"
     
-    local display_server
-    display_server=$(detect_display_server)
-    
-    case "$display_server" in
-        "wayland")
-            if command -v wl-copy &> /dev/null; then
-                log_info "Using wl-copy for Wayland clipboard operations"
-                if ! cat "$SCREENSHOT_FILE" | wl-copy; then
-                    log_error "Failed to copy screenshot to clipboard using wl-copy"
-                    return 1
-                fi
-                # Get image size and resolution
-                local image_info
-                image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
-                log_info "Direct image copied to clipboard. $image_info"
-            else
-                log_error "wl-copy not found. Please install wl-clipboard"
-                return 1
-            fi
-            ;;
-        "x11")
-            if command -v xclip &> /dev/null; then
-                log_info "Using xclip for X11 clipboard operations"
-                if ! xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"; then
-                    log_error "Failed to copy screenshot to clipboard using xclip"
-                    return 1
-                fi
-                # Get image size and resolution
-                local image_info
-                image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
-                log_info "Direct image copied to clipboard. $image_info"
-            else
-                log_error "xclip not found. Please install xclip"
-                return 1
-            fi
-            ;;
-        *)
-            log_error "No supported display server detected"
+    if [[ "$os_type" == "macos" ]]; then
+        if ! osascript -e 'set the clipboard to (read (POSIX file "'"$SCREENSHOT_FILE"'") as JPEG picture)'; then
+            log_error "Failed to copy screenshot to clipboard using osascript"
             return 1
-            ;;
-    esac
+        fi
+        local image_info
+        image_info=$(sips -g pixelWidth -g pixelHeight "$SCREENSHOT_FILE" | tail -n2 | tr '\n' ' ')
+        log_info "Direct image copied to clipboard. $image_info"
+    else
+        local display_server
+        display_server=$(detect_display_server)
+        
+        case "$display_server" in
+            "wayland")
+                if command -v wl-copy &> /dev/null; then
+                    log_info "Using wl-copy for Wayland clipboard operations"
+                    if ! cat "$SCREENSHOT_FILE" | wl-copy; then
+                        log_error "Failed to copy screenshot to clipboard using wl-copy"
+                        return 1
+                    fi
+                    # Get image size and resolution
+                    local image_info
+                    image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
+                    log_info "Direct image copied to clipboard. $image_info"
+                else
+                    log_error "wl-copy not found. Please install wl-clipboard"
+                    return 1
+                fi
+                ;;
+            "x11")
+                if command -v xclip &> /dev/null; then
+                    log_info "Using xclip for X11 clipboard operations"
+                    if ! xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"; then
+                        log_error "Failed to copy screenshot to clipboard using xclip"
+                        return 1
+                    fi
+                    # Get image size and resolution
+                    local image_info
+                    image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
+                    log_info "Direct image copied to clipboard. $image_info"
+                else
+                    log_error "xclip not found. Please install xclip"
+                    return 1
+                fi
+                ;;
+            *)
+                log_error "No supported display server detected"
+                return 1
+                ;;
+        esac
+    fi
     
     log_success "Screenshot copied to clipboard"
     fyi_call "HyprUpld" "Screenshot copied to clipboard"
@@ -1082,9 +1137,14 @@ initialize_script() {
     ensure_sound_files
     validate_config
     
-    # Detect distribution and desktop environment
-    distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
-    desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
+    if [[ "$os_type" == "macos" ]]; then
+        distro="macOS $(sw_vers -productVersion)"
+        desktop_env="aqua"
+    else
+        # Detect distribution and desktop environment
+        distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
+        desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
+    fi
     
     log_info "Detected distribution: $distro"
     log_info "Detected desktop environment: $desktop_env"

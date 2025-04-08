@@ -8,6 +8,8 @@ on:
       - 'HyprUpld.png'
       - 'compile.sh'
       - 'install_scripts.sh'
+      - 'compile_macos.sh'
+      - 'install_scripts_macos.sh'
 
 permissions:
   contents: write
@@ -26,7 +28,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y wget fuse build-essential cmake \
                                   libglib2.0-dev libcairo2-dev libpango1.0-dev \
-                                  imagemagick zip
+                                  imagemagick zip jq
 
       - name: Set Executable Permissions
         run: |
@@ -66,24 +68,117 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create GitHub Release
+      - name: Get Short SHA
+        id: sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Check Existing Release
+        id: check_release
+        run: |
+          # Try to get the release by tag
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.sha.outputs.sha }}")
+          
+          if [ "$STATUS" -eq "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            # Get release ID for the existing release
+            RELEASE_ID=$(curl -s \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.sha.outputs.sha }}" \
+              | jq -r .id)
+            echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create New Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        if: steps.check_release.outputs.exists != 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: release-${{ steps.slug.outputs.sha_short }}
-          name: Release ${{ steps.slug.outputs.sha_short }}
-          draft: false
-          prerelease: false
-          files: |
-            Compiled/*.AppImage
-            Scripts/*.sh
-            hypr_installer.zip
+          tag_name: ${{ steps.sha.outputs.sha }}
+          release_name: Release ${{ steps.sha.outputs.sha }}
           body: |
             ${{ steps.changelog.outputs.changelog }}
 
             ### Included in this release:
             - Individual AppImages (Compiled directory)
             - Individual script files (Scripts directory)
-            - Complete installation package (hypr_installer.zip) including all AppImages, scripts, and the installation script
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - Complete installation package (hypr_installer.zip)
+          draft: false
+          prerelease: false
+
+      - name: Upload Assets to Existing Release
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          # Upload AppImages
+          for appimage in Compiled/*.AppImage; do
+            APPIMAGE_NAME=$(basename "$appimage")
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/x-executable" \
+              --data-binary @"$appimage" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.check_release.outputs.release_id }}/assets?name=$APPIMAGE_NAME"
+          done
+
+          # Upload Scripts
+          for script in Scripts/*.sh; do
+            SCRIPT_NAME=$(basename "$script")
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: text/x-shellscript" \
+              --data-binary @"$script" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.check_release.outputs.release_id }}/assets?name=$SCRIPT_NAME"
+          done
+
+          # Upload installer package
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"hypr_installer.zip" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.check_release.outputs.release_id }}/assets?name=hypr_installer.zip"
+
+      - name: Upload Assets to New Release
+        if: steps.check_release.outputs.exists != 'true'
+        run: |
+          # Upload AppImages
+          for appimage in Compiled/*.AppImage; do
+            APPIMAGE_NAME=$(basename "$appimage")
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/x-executable" \
+              --data-binary @"$appimage" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$APPIMAGE_NAME"
+          done
+
+          # Upload Scripts
+          for script in Scripts/*.sh; do
+            SCRIPT_NAME=$(basename "$script")
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: text/x-shellscript" \
+              --data-binary @"$script" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$SCRIPT_NAME"
+          done
+
+          # Upload installer package
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"hypr_installer.zip" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=hypr_installer.zip"
