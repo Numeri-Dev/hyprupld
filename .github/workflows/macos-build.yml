@@ -74,8 +74,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.sha.outputs.sha }}-MacOS
-          release_name: Release ${{ steps.sha.outputs.sha }}-MacOS
+          tag_name: MacOS-${{ steps.sha.outputs.sha }}
+          release_name: Release MacOS ${{ steps.sha.outputs.sha }}
           body: |
             ${{ steps.changelog.outputs.changelog }}
 
