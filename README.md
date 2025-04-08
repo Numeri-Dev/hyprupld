@@ -32,9 +32,13 @@
 ## Quick Start
 
 To install HyprUpld, execute the following one-line command in your terminal:
-
+### Linux
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
+```
+### MacOS
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/macos_install.sh)"
 ```
 
 > **Note:** If downloading manually from the [releases page](https://github.com/PhoenixAceVFX/hyprupld/releases), remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
@@ -179,7 +183,6 @@ For more information, visit the [official website](https://hyprupld.space).
 ## Resources
 
 - [Readme](https://github.com/PhoenixAceVFX/hyprupld/blob/main/README.md)
-- [Wiki](https://github.com/PhoenixAceVFX/hyprupld/wiki)
 - [Releases](https://github.com/PhoenixAceVFX/hyprupld/releases)
 
 ---
@@ -215,6 +218,7 @@ To install:
 * [python](https://github.com/python) - Replacing JQ as a JSON Processor
 * [sips](https://developer.apple.com/documentation/sips) - Command line tool for macOS
 * [osascript](https://developer.apple.com/documentation/appscript) - Command line tool for macOS
+* [zip](https://github.com/infozip/zip) - Command line tool for creating zip archives
 
 ### Screenshot Tools
 * [grimblast](https://github.com/hyprwm/contrib) - For Sway and i3

@@ -1,4 +1,4 @@
-name: Build and Release macOS Apps
+name: Build and Release macOS
 
 on:
   workflow_dispatch:
@@ -25,89 +25,85 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          brew install imagemagick
+          brew install imagemagick zip jq
 
-      - name: Make Scripts Executable
+      - name: Set Executable Permissions
         run: |
-          chmod +x compile_macos.sh
-          chmod +x install_scripts_macos.sh
+          chmod +x compile_macos.sh install_scripts_macos.sh install_macos.sh
 
-      - name: Build macOS Apps
+      - name: Build macOS Package
+        run: ./compile_macos.sh
+
+      - name: Set Permissions for Generated Files
         run: |
-          ./compile_macos.sh
+          chmod +x Scripts/*.sh
+
+      - name: Package Release Artifacts
+        run: |
+          mkdir -p release_package/Scripts
+          cp install_scripts_macos.sh release_package/
+          cp install_macos.sh release_package/
+          cp -r Scripts/ release_package/
+          cd release_package
+          zip -r ../hypr_installer_macos.zip .
+
+      - name: Retrieve Short Git SHA
+        id: slug
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 --always HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "changelog=Initial release" >> $GITHUB_OUTPUT
+          else
+            CHANGES=$(git log --pretty=format:"* %s (%h)" $PREVIOUS_TAG..HEAD)
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - name: Get Short SHA
         id: sha
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Check Existing Release
-        id: check_release
-        run: |
-          # Try to get the release by tag
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.sha.outputs.sha }}")
-          
-          if [ "$STATUS" -eq "200" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            # Get release ID for the existing release
-            RELEASE_ID=$(curl -s \
-              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.sha.outputs.sha }}" \
-              | jq -r .id)
-            echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Create Release
         id: create_release
-        if: steps.check_release.outputs.exists != 'true'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.sha.outputs.sha }}
-          release_name: Release ${{ steps.sha.outputs.sha }}
+          tag_name: MacOS-${{ steps.sha.outputs.sha }}
+          release_name: Release MacOS ${{ steps.sha.outputs.sha }}
+          body: |
+            ${{ steps.changelog.outputs.changelog }}
+
+            ### Included in this release:
+            - Individual script files (Scripts directory)
+            - Complete installation package (hypr_installer_macos.zip)
           draft: false
           prerelease: false
 
-      - name: Upload macOS Apps to Existing Release
-        if: steps.check_release.outputs.exists == 'true'
+      - name: Upload Assets
         run: |
-          for app in Compiled/*.app; do
-            APP_NAME=$(basename "$app")
-            # Create a zip of the .app bundle
-            cd Compiled
-            zip -r "$APP_NAME.zip" "$APP_NAME"
-            cd ..
-            
-            # Upload to the existing release
+          # Upload Scripts
+          for script in Scripts/*.sh; do
+            SCRIPT_NAME=$(basename "$script")
             curl -L \
               -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: application/zip" \
-              --data-binary @"Compiled/$APP_NAME.zip" \
-              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.check_release.outputs.release_id }}/assets?name=$APP_NAME.zip"
+              -H "Content-Type: text/x-shellscript" \
+              --data-binary @"$script" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$SCRIPT_NAME"
           done
 
-      - name: Upload macOS Apps to New Release
-        if: steps.check_release.outputs.exists != 'true'
-        run: |
-          for app in Compiled/*.app; do
-            APP_NAME=$(basename "$app")
-            # Create a zip of the .app bundle
-            cd Compiled
-            zip -r "$APP_NAME.zip" "$APP_NAME"
-            cd ..
-            
-            # Upload to the new release
-            curl -L \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: application/zip" \
-              --data-binary @"Compiled/$APP_NAME.zip" \
-              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$APP_NAME.zip"
-          done
+          # Upload installer package
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"hypr_installer_macos.zip" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=hypr_installer_macos.zip"
