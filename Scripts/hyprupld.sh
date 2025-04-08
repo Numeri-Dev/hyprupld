@@ -11,9 +11,9 @@
 #==============================================================================
 
 # Exit on error, undefined variables, and pipe failures
-set -o errexit  
-set -o nounset  
-set -o pipefail 
+set -o errexit
+set -o nounset
+set -o pipefail
 
 # Configuration paths for settings and package managers
 readonly CONFIG_DIR="${HOME}/.config/hyprupld"
@@ -141,7 +141,7 @@ backup_and_reset_config() {
         mv "$SETTINGS_FILE" "$backup_file"
         log_warning "Corrupted settings file backed up to: $backup_file"
     fi
-    echo "{}" > "$SETTINGS_FILE"
+    echo "{}" >"$SETTINGS_FILE"
     log_info "Created new settings file"
 }
 
@@ -178,7 +178,7 @@ with open('$temp_file', 'w') as f:
     json.dump(data, f, indent=4)
 "
     fi
-    
+
     mv "$temp_file" "$SETTINGS_FILE"
 }
 
@@ -218,13 +218,13 @@ check_display_server() {
 check_basic_dependencies() {
     local basic_deps=("curl" "python3")
     local missing=()
-    
+
     for dep in "${basic_deps[@]}"; do
         if ! command -v "$dep" &>/dev/null; then
             missing+=("$dep")
         fi
     done
-    
+
     if [[ ${#missing[@]} -gt 0 ]]; then
         log_error "Missing basic dependencies: ${missing[*]}"
         exit 1
@@ -256,7 +256,7 @@ detect_package_managers() {
         fi
     done
 
-    printf '%s\n' "${detected_managers[@]}" | python3 -c "import sys, json; json.dump(sys.stdin.read().splitlines(), sys.stdout)" > "$PCKMGRS_FILE"
+    printf '%s\n' "${detected_managers[@]}" | python3 -c "import sys, json; json.dump(sys.stdin.read().splitlines(), sys.stdout)" >"$PCKMGRS_FILE"
     log_success "Detected package managers: ${detected_managers[*]}"
     echo "${detected_managers[@]}"
 }
@@ -348,49 +348,49 @@ install_missing_packages() {
         mapfile -t package_managers < <(python3 -c "import json; print(json.load(open('$PCKMGRS_FILE')))")
         for manager in "${package_managers[@]}"; do
             case "$manager" in
-                "arch")
-                    handle_gui_installation_arch "${missing_packages[@]}"
-                    return
-                    ;;
-                "debian")
-                    handle_gui_installation_debian "${missing_packages[@]}"
-                    return
-                    ;;
-                "fedora")
-                    handle_gui_installation_fedora "${missing_packages[@]}"
-                    return
-                    ;;
-                "nixos")
-                    handle_gui_installation_nixos "${missing_packages[@]}"
-                    return
-                    ;;
-                "gentoo")
-                    handle_gui_installation_gentoo "${missing_packages[@]}"
-                    return
-                    ;;
-                "opensuse")
-                    handle_gui_installation_opensuse "${missing_packages[@]}"
-                    return
-                    ;;
-                "void")
-                    handle_gui_installation_void "${missing_packages[@]}"
-                    return
-                    ;;
-                "macos")
-                    if command -v brew &> /dev/null; then
-                        log_step "Installing packages with Homebrew..."
-                        if brew install "${missing_packages[@]}"; then
-                            log_success "Successfully installed packages with Homebrew"
-                            return
-                        else
-                            log_error "Failed to install packages with Homebrew"
-                            return 1
-                        fi
+            "arch")
+                handle_gui_installation_arch "${missing_packages[@]}"
+                return
+                ;;
+            "debian")
+                handle_gui_installation_debian "${missing_packages[@]}"
+                return
+                ;;
+            "fedora")
+                handle_gui_installation_fedora "${missing_packages[@]}"
+                return
+                ;;
+            "nixos")
+                handle_gui_installation_nixos "${missing_packages[@]}"
+                return
+                ;;
+            "gentoo")
+                handle_gui_installation_gentoo "${missing_packages[@]}"
+                return
+                ;;
+            "opensuse")
+                handle_gui_installation_opensuse "${missing_packages[@]}"
+                return
+                ;;
+            "void")
+                handle_gui_installation_void "${missing_packages[@]}"
+                return
+                ;;
+            "macos")
+                if command -v brew &>/dev/null; then
+                    log_step "Installing packages with Homebrew..."
+                    if brew install "${missing_packages[@]}"; then
+                        log_success "Successfully installed packages with Homebrew"
+                        return
+                    else
+                        log_error "Failed to install packages with Homebrew"
+                        return 1
                     fi
-                    ;;
-                *)
-                    log_warning "Unsupported package manager: $manager"
-                    ;;
+                fi
+                ;;
+            *)
+                log_warning "Unsupported package manager: $manager"
+                ;;
             esac
         done
     else
@@ -408,12 +408,12 @@ handle_gui_installation_debian() {
         log_error "User declined package installation"
         exit 1
     fi
-    
+
     local sudo_password
     sudo_password=$(zenity --password --title="Authentication Required") || exit 1
     askpass_script="$(mktemp)"
-    echo '#!/bin/sh' > "$askpass_script"
-    echo "echo '$sudo_password' | sudo -S apt-get install -y ${missing_packages[*]}" >> "$askpass_script"
+    echo '#!/bin/sh' >"$askpass_script"
+    echo "echo '$sudo_password' | sudo -S apt-get install -y ${missing_packages[*]}" >>"$askpass_script"
     chmod +x "$askpass_script"
     export SUDO_ASKPASS="$askpass_script"
     (bash "$askpass_script" &)
@@ -429,12 +429,12 @@ handle_gui_installation_arch() {
         log_error "User declined package installation"
         exit 1
     fi
-    
+
     local sudo_password
     sudo_password=$(zenity --password --title="Authentication Required") || exit 1
     askpass_script="$(mktemp)"
-    echo '#!/bin/sh' > "$askpass_script"
-    echo "echo '$sudo_password' | sudo -S pacman -S --noconfirm ${missing_packages[*]}" >> "$askpass_script"
+    echo '#!/bin/sh' >"$askpass_script"
+    echo "echo '$sudo_password' | sudo -S pacman -S --noconfirm ${missing_packages[*]}" >>"$askpass_script"
     chmod +x "$askpass_script"
     export SUDO_ASKPASS="$askpass_script"
     (bash "$askpass_script" &)
@@ -444,87 +444,87 @@ handle_gui_installation_arch() {
 parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -debug)
-                set -euox pipefail
-                shift
-                ;;
-            -reset)
-                handle_reset
-                exit 0
-                ;;
-            -h|--help)
-                display_help
-                exit 0
-                ;;
-            -s|--save)
-                handle_save_option
-                exit 0
-                ;;
-            -update)
-                handle_update
-                ;;
-            -mute)
-                mute_enabled=true
-                shift
-                ;;
-            -silent)
-                silent_enabled=true
-                mute_enabled=true
-                shift
-                ;;
-            -kill)
-                log_info "Killing all running instances of hyprupld..."
-                pkill -f hyprupld
-                log_success "All running instances of hyprupld have been killed."
-                exit 0
-                ;;
-            -zipline)
-                if [[ $# -lt 3 ]]; then
-                    log_error "Zipline usage: -zipline <base_url> <authorization>"
-                    exit 1
-                fi
-                service="zipline"
-                url="${2%/}/api/upload"  # Remove trailing slash if present and append /api/upload
-                auth="$3"
-                auth_header="authorization"
-                auth_required=false
-                shift 3
-                ;;
-            -xbackbone)
-                if [[ $# -lt 3 ]]; then
-                    log_error "XBackbone usage: -xbackbone <base_url> <token>"
-                    exit 1
-                fi
-                service="xbackbone"
-                url="${2%/}/upload"  # Remove trailing slash if present and append /upload
-                auth="$3"
-                auth_header="token"
-                auth_required=false
-                shift 3
-                ;;
-            -*)
-                local service_name="${1#-}"
-                if [[ -n "${SERVICES[$service_name]:-}" ]]; then
-                    IFS='|' read -r url auth_header <<< "${SERVICES[$service_name]}"
-                    service="$service_name"
-                    # Skip auth check for imgur
-                    if [[ "$service_name" == "imgur" ]]; then
-                        auth_required=false
-                    else
-                        auth_required=true
-                    fi
-                    shift
+        -debug)
+            set -euox pipefail
+            shift
+            ;;
+        -reset)
+            handle_reset
+            exit 0
+            ;;
+        -h | --help)
+            display_help
+            exit 0
+            ;;
+        -s | --save)
+            handle_save_option
+            exit 0
+            ;;
+        -update)
+            handle_update
+            ;;
+        -mute)
+            mute_enabled=true
+            shift
+            ;;
+        -silent)
+            silent_enabled=true
+            mute_enabled=true
+            shift
+            ;;
+        -kill)
+            log_info "Killing all running instances of hyprupld..."
+            pkill -f hyprupld
+            log_success "All running instances of hyprupld have been killed."
+            exit 0
+            ;;
+        -zipline)
+            if [[ $# -lt 3 ]]; then
+                log_error "Zipline usage: -zipline <base_url> <authorization>"
+                exit 1
+            fi
+            service="zipline"
+            url="${2%/}/api/upload" # Remove trailing slash if present and append /api/upload
+            auth="$3"
+            auth_header="authorization"
+            auth_required=false
+            shift 3
+            ;;
+        -xbackbone)
+            if [[ $# -lt 3 ]]; then
+                log_error "XBackbone usage: -xbackbone <base_url> <token>"
+                exit 1
+            fi
+            service="xbackbone"
+            url="${2%/}/upload" # Remove trailing slash if present and append /upload
+            auth="$3"
+            auth_header="token"
+            auth_required=false
+            shift 3
+            ;;
+        -*)
+            local service_name="${1#-}"
+            if [[ -n "${SERVICES[$service_name]:-}" ]]; then
+                IFS='|' read -r url auth_header <<<"${SERVICES[$service_name]}"
+                service="$service_name"
+                # Skip auth check for imgur
+                if [[ "$service_name" == "imgur" ]]; then
+                    auth_required=false
                 else
-                    log_error "Unknown option: $1"
-                    echo "Use -h or --help for usage information"
-                    exit 1
+                    auth_required=true
                 fi
-                ;;
-            *)
+                shift
+            else
                 log_error "Unknown option: $1"
                 echo "Use -h or --help for usage information"
                 exit 1
-                ;;
+            fi
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            echo "Use -h or --help for usage information"
+            exit 1
+            ;;
         esac
     done
 }
@@ -549,7 +549,7 @@ handle_save_option() {
 get_save_directory() {
     local dir
     dir=$(get_saved_value "$SAVE_DIR_SETTING")
-    
+
     if [[ -z "$dir" ]]; then
         log_info "No saved screenshot directory found, prompting user"
         local base_dir
@@ -557,7 +557,7 @@ get_save_directory() {
             --directory \
             --title="Select Base Directory" \
             --text="Choose where to create the 'hyprupld' screenshots folder:") || exit 1
-            
+
         # Create the hyprupld subdirectory
         dir="${base_dir}/hyprupld"
         if [[ ! -d "$dir" ]]; then
@@ -568,24 +568,24 @@ get_save_directory() {
             }
             log_info "Created hyprupld directory at: $dir"
         fi
-            
+
         save_value "$SAVE_DIR_SETTING" "$dir"
         log_success "Screenshot directory set to: $dir"
     fi
-    
+
     # Verify directory exists and is writable
     if [[ ! -d "$dir" ]]; then
         log_error "Screenshot directory does not exist: $dir"
         save_value "$SAVE_DIR_SETTING" ""
         exit 1
     fi
-    
+
     if [[ ! -w "$dir" ]]; then
         log_error "Screenshot directory is not writable: $dir"
         save_value "$SAVE_DIR_SETTING" ""
         exit 1
     fi
-    
+
     echo "$dir"
     return 0
 }
@@ -597,18 +597,18 @@ save_screenshot() {
         local month_year
         month_year=$(date +%B-%Y | tr '[:upper:]' '[:lower:]')
         local monthly_dir="${save_directory}/${month_year}"
-        
+
         # Create monthly directory if it doesn't exist
         if [[ ! -d "$monthly_dir" ]]; then
             mkdir -p "$monthly_dir"
             log_info "Created new month directory: $monthly_dir"
         fi
-        
+
         # Generate timestamp and save file
         local timestamp
         timestamp=$(date +%Y%m%d-%H%M%S)
         local save_path="${monthly_dir}/hyprupld-${timestamp}.png"
-        
+
         cp "$SCREENSHOT_FILE" "$save_path"
         log_success "Screenshot saved to: $save_path"
         fyi_call "HyprUpld" "Screenshot saved to: $save_path"
@@ -617,7 +617,7 @@ save_screenshot() {
 
 # Display help information for the script
 display_help() {
-    cat << EOF
+    cat <<EOF
 hyprupld - Screenshot and Upload Utility
 
 Usage: hyprupld [OPTIONS]
@@ -664,36 +664,36 @@ take_screenshot() {
         take_macos_screenshot
     else
         log_step "Taking screenshot based on desktop environment: $desktop_env"
-        
+
         case "$desktop_env" in
-            *"sway"*|*"hyprland"*|*"i3"*)
-                take_wayland_screenshot
-                ;;
-            *"kde"*)
-                take_kde_screenshot
-                ;;
-            *"xfce"*)
-                take_xfce_screenshot
-                ;;
-            *"gnome"*)
-                take_gnome_screenshot
-                ;;
-            *"cinnamon"*)
-                take_cinnamon_screenshot
-                ;;
-            *"deepin"*)
-                take_deepin_screenshot
-                ;;
-            *"mate"*)
-                take_mate_screenshot
-                ;;
-            *"cosmic"*)
-                take_cosmic_screenshot
-                ;;
-            *)
-                log_error "Unsupported desktop environment: $desktop_env"
-                return 1
-                ;;
+        *"sway"* | *"hyprland"* | *"i3"*)
+            take_wayland_screenshot
+            ;;
+        *"kde"*)
+            take_kde_screenshot
+            ;;
+        *"xfce"*)
+            take_xfce_screenshot
+            ;;
+        *"gnome"*)
+            take_gnome_screenshot
+            ;;
+        *"cinnamon"*)
+            take_cinnamon_screenshot
+            ;;
+        *"deepin"*)
+            take_deepin_screenshot
+            ;;
+        *"mate"*)
+            take_mate_screenshot
+            ;;
+        *"cosmic"*)
+            take_cosmic_screenshot
+            ;;
+        *)
+            log_error "Unsupported desktop environment: $desktop_env"
+            return 1
+            ;;
         esac
     fi
 
@@ -717,7 +717,7 @@ take_kde_screenshot() {
     log_info "Detected KDE environment"
     local tool
     tool=$(get_screenshot_tool "kde" "Flameshot" "Spectacle")
-    
+
     if [[ "$tool" == "Flameshot" ]]; then
         flameshot gui -p "$SCREENSHOT_FILE"
         play_sound "$SCREENSHOT_SOUND"
@@ -731,7 +731,7 @@ take_kde_screenshot() {
 take_xfce_screenshot() {
     local tool
     tool=$(get_screenshot_tool "xfce" "XFCE4-Screenshooter" "Flameshot")
-    
+
     if [[ "$tool" == "XFCE4-Screenshooter" ]]; then
         xfce4-screenshooter -r -s "$SCREENSHOT_FILE"
         play_sound "$SCREENSHOT_SOUND"
@@ -745,7 +745,7 @@ take_xfce_screenshot() {
 take_gnome_screenshot() {
     local tool
     tool=$(get_screenshot_tool "gnome" "GNOME-Screenshot" "Flameshot")
-    
+
     if [[ "$tool" == "GNOME-Screenshot" ]]; then
         gnome-screenshot -a -f "$SCREENSHOT_FILE"
         play_sound "$SCREENSHOT_SOUND"
@@ -759,7 +759,7 @@ take_gnome_screenshot() {
 take_cinnamon_screenshot() {
     local tool
     tool=$(get_screenshot_tool "cinnamon" "GNOME-Screenshot" "Flameshot")
-    
+
     if [[ "$tool" == "GNOME-Screenshot" ]]; then
         gnome-screenshot -a -f "$SCREENSHOT_FILE"
         play_sound "$SCREENSHOT_SOUND"
@@ -779,31 +779,31 @@ take_deepin_screenshot() {
 take_macos_screenshot() {
     local tool
     tool=$(get_screenshot_tool "macos" "Built-in" "CleanShot X" "Xsnapper")
-    
+
     case "$tool" in
-        "Built-in")
-            screencapture -i "$SCREENSHOT_FILE"
-            ;;
-        "CleanShot X")
-            if ! command -v cleanshot &> /dev/null; then
-                log_error "CleanShot X not found. Please install it from https://cleanshot.com"
-                return 1
-            fi
-            cleanshot capture --clipboard --save-path "$SCREENSHOT_FILE"
-            ;;
-        "Xsnapper")
-            if ! command -v xsnapper &> /dev/null; then
-                log_error "Xsnapper not found. Please install it from https://xsnapper.com"
-                return 1
-            fi
-            xsnapper capture --output "$SCREENSHOT_FILE"
-            ;;
-        *)
-            log_error "Invalid screenshot tool selected for macOS"
+    "Built-in")
+        screencapture -i "$SCREENSHOT_FILE"
+        ;;
+    "CleanShot X")
+        if ! command -v cleanshot &>/dev/null; then
+            log_error "CleanShot X not found. Please install it from https://cleanshot.com"
             return 1
-            ;;
+        fi
+        cleanshot capture --clipboard --save-path "$SCREENSHOT_FILE"
+        ;;
+    "Xsnapper")
+        if ! command -v xsnapper &>/dev/null; then
+            log_error "Xsnapper not found. Please install it from https://xsnapper.com"
+            return 1
+        fi
+        xsnapper capture --output "$SCREENSHOT_FILE"
+        ;;
+    *)
+        log_error "Invalid screenshot tool selected for macOS"
+        return 1
+        ;;
     esac
-    
+
     play_sound "$SCREENSHOT_SOUND"
 }
 
@@ -811,7 +811,7 @@ take_macos_screenshot() {
 take_mate_screenshot() {
     local tool
     tool=$(get_screenshot_tool "mate" "MATE-Screenshot" "Flameshot")
-    
+
     if [[ "$tool" == "MATE-Screenshot" ]]; then
         mate-screenshot -a -f "$SCREENSHOT_FILE"
         play_sound "$SCREENSHOT_SOUND"
@@ -825,7 +825,7 @@ take_mate_screenshot() {
 take_cosmic_screenshot() {
     local tool
     tool=$(get_screenshot_tool "cosmic" "GNOME-Screenshot" "Flameshot")
-    
+
     if [[ "$tool" == "GNOME-Screenshot" ]]; then
         gnome-screenshot -a -f "$SCREENSHOT_FILE"
         play_sound "$SCREENSHOT_SOUND"
@@ -841,7 +841,7 @@ get_screenshot_tool() {
     local default_tool="$2"
     local alternative_tool="$3"
     local tool
-    
+
     tool=$(get_saved_value "${de}_tool")
     if [[ -z "$tool" ]]; then
         log_info "No preferred screenshot tool saved, prompting user"
@@ -871,7 +871,7 @@ verify_screenshot() {
 handle_upload() {
     # Save the screenshot if -s option was used
     save_screenshot
-    
+
     if [[ -n "$service" ]]; then
         upload_screenshot
     else
@@ -886,20 +886,20 @@ upload_screenshot() {
     log_info "Detected Firefox version: $firefox_version"
 
     log_step "Uploading screenshot to $url"
-    
+
     case "$service" in
-        "guns")
-            upload_to_guns
-            ;;
-        "fakecrime")
-            upload_to_fakecrime
-            ;;
-        "imgur")
-            upload_to_imgur
-            ;;
-        *)
-            upload_to_generic_service
-            ;;
+    "guns")
+        upload_to_guns
+        ;;
+    "fakecrime")
+        upload_to_fakecrime
+        ;;
+    "imgur")
+        upload_to_imgur
+        ;;
+    *)
+        upload_to_generic_service
+        ;;
     esac
 }
 
@@ -910,7 +910,7 @@ upload_to_guns() {
         -F "file=@$SCREENSHOT_FILE" \
         -F "key=$auth" \
         "$url")
-    echo "$response" > "$UPLOAD_RESPONSE"
+    echo "$response" >"$UPLOAD_RESPONSE"
     process_upload_response
 }
 
@@ -921,12 +921,12 @@ upload_to_fakecrime() {
         -F "file=@$SCREENSHOT_FILE" \
         -H "Authorization: $auth" \
         -v "$url" 2>/dev/null)
-        
+
     if [[ -z "$image_url" || "$image_url" == "null" ]]; then
         log_error "Failed to upload screenshot"
         return 1
     fi
-    
+
     copy_url_to_clipboard "$image_url"
 }
 
@@ -937,35 +937,35 @@ upload_to_imgur() {
         log_error "Screenshot file not found: $SCREENSHOT_FILE"
         return 1
     fi
-    
+
     # Try uploading without authentication first (anonymous upload)
     local response
     response=$(curl -s -X POST \
         -H "Content-Type: multipart/form-data" \
         -F "image=@$SCREENSHOT_FILE" \
         "https://api.imgur.com/3/upload")
-    
+
     # Save response
-    echo "$response" > "$UPLOAD_RESPONSE"
-    
+    echo "$response" >"$UPLOAD_RESPONSE"
+
     # Check if we got a rate limit error
     if python3 -c "import json; response = json.load(open('$UPLOAD_RESPONSE')); exit(1 if response.get('status') == 429 else 0)" 2>/dev/null; then
         log_warning "Anonymous upload rate limited, trying with Client-ID..."
-        
+
         # Try with Client-ID
         response=$(curl -s -X POST \
             -H "Authorization: Client-ID 0f1ac06039c0e0e" \
             -F "image=@$SCREENSHOT_FILE" \
             "$url")
-        echo "$response" > "$UPLOAD_RESPONSE"
+        echo "$response" >"$UPLOAD_RESPONSE"
     fi
-    
+
     # Final check if upload was successful
     if ! python3 -c "import json; response = json.load(open('$UPLOAD_RESPONSE')); exit(0 if response.get('success') else 1)" 2>/dev/null; then
         log_error "Failed to upload to Imgur. Response: $(cat "$UPLOAD_RESPONSE")"
         return 1
     fi
-    
+
     process_upload_response
 }
 
@@ -978,7 +978,7 @@ upload_to_generic_service() {
         -H "$auth_header: $auth" \
         -F "file=@$SCREENSHOT_FILE" \
         -o "$UPLOAD_RESPONSE")
-        
+
     process_upload_response
 }
 
@@ -991,34 +991,34 @@ process_upload_response() {
 
     local json_key
     case "$service" in
-        "pixelvault") json_key="resource" ;;
-        "nest") json_key="fileURL" ;;
-        "guns") json_key="link" ;;
-        "ez") json_key="imageUrl" ;;
-        "zipline") json_key="files[0].url" ;;
-        "xbackbone") json_key="upload" ;;
-        "fakecrime") json_key="url" ;;
-        "imgur") 
-            # For imgur, we need to parse the nested JSON structure
-            url=$(python3 -c "import json; print(json.load(open('$UPLOAD_RESPONSE'))['data']['link'])" 2>/dev/null)
-            if [[ -n "$url" ]]; then
-                copy_url_to_clipboard "$url"
-                return 0
-            fi
-            return 1
-            ;;
-        *) json_key="resource" ;;
+    "pixelvault") json_key="resource" ;;
+    "nest") json_key="fileURL" ;;
+    "guns") json_key="link" ;;
+    "ez") json_key="imageUrl" ;;
+    "zipline") json_key="files[0].url" ;;
+    "xbackbone") json_key="upload" ;;
+    "fakecrime") json_key="url" ;;
+    "imgur")
+        # For imgur, we need to parse the nested JSON structure
+        url=$(python3 -c "import json; print(json.load(open('$UPLOAD_RESPONSE'))['data']['link'])" 2>/dev/null)
+        if [[ -n "$url" ]]; then
+            copy_url_to_clipboard "$url"
+            return 0
+        fi
+        return 1
+        ;;
+    *) json_key="resource" ;;
     esac
-    
+
     local url
     url=$(python3 -c "import json; print(json.load(open('$UPLOAD_RESPONSE')).get('$json_key', ''))")
-    
+
     # Check if the URL is empty or null
     if [[ -z "$url" || "$url" == "null" ]]; then
         log_error "Failed to extract URL from upload response for service: $service"
         return 1
     fi
-    
+
     copy_url_to_clipboard "$url"
 }
 
@@ -1036,7 +1036,7 @@ detect_display_server() {
 # Copy the screenshot to the clipboard
 copy_to_clipboard() {
     log_step "Copying screenshot to clipboard"
-    
+
     if [[ "$os_type" == "macos" ]]; then
         if ! osascript -e 'set the clipboard to (read (POSIX file "'"$SCREENSHOT_FILE"'") as JPEG picture)'; then
             log_error "Failed to copy screenshot to clipboard using osascript"
@@ -1048,47 +1048,47 @@ copy_to_clipboard() {
     else
         local display_server
         display_server=$(detect_display_server)
-        
+
         case "$display_server" in
-            "wayland")
-                if command -v wl-copy &> /dev/null; then
-                    log_info "Using wl-copy for Wayland clipboard operations"
-                    if ! cat "$SCREENSHOT_FILE" | wl-copy; then
-                        log_error "Failed to copy screenshot to clipboard using wl-copy"
-                        return 1
-                    fi
-                    # Get image size and resolution
-                    local image_info
-                    image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
-                    log_info "Direct image copied to clipboard. $image_info"
-                else
-                    log_error "wl-copy not found. Please install wl-clipboard"
+        "wayland")
+            if command -v wl-copy &>/dev/null; then
+                log_info "Using wl-copy for Wayland clipboard operations"
+                if ! cat "$SCREENSHOT_FILE" | wl-copy; then
+                    log_error "Failed to copy screenshot to clipboard using wl-copy"
                     return 1
                 fi
-                ;;
-            "x11")
-                if command -v xclip &> /dev/null; then
-                    log_info "Using xclip for X11 clipboard operations"
-                    if ! xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"; then
-                        log_error "Failed to copy screenshot to clipboard using xclip"
-                        return 1
-                    fi
-                    # Get image size and resolution
-                    local image_info
-                    image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
-                    log_info "Direct image copied to clipboard. $image_info"
-                else
-                    log_error "xclip not found. Please install xclip"
-                    return 1
-                fi
-                ;;
-            *)
-                log_error "No supported display server detected"
+                # Get image size and resolution
+                local image_info
+                image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
+                log_info "Direct image copied to clipboard. $image_info"
+            else
+                log_error "wl-copy not found. Please install wl-clipboard"
                 return 1
-                ;;
+            fi
+            ;;
+        "x11")
+            if command -v xclip &>/dev/null; then
+                log_info "Using xclip for X11 clipboard operations"
+                if ! xclip -selection clipboard -t image/png -i "$SCREENSHOT_FILE"; then
+                    log_error "Failed to copy screenshot to clipboard using xclip"
+                    return 1
+                fi
+                # Get image size and resolution
+                local image_info
+                image_info=$(identify -format "Size: %b, Resolution: %wx%h" "$SCREENSHOT_FILE")
+                log_info "Direct image copied to clipboard. $image_info"
+            else
+                log_error "xclip not found. Please install xclip"
+                return 1
+            fi
+            ;;
+        *)
+            log_error "No supported display server detected"
+            return 1
+            ;;
         esac
     fi
-    
+
     log_success "Screenshot copied to clipboard"
     fyi_call "HyprUpld" "Screenshot copied to clipboard"
     play_sound "$CLIPBOARD_SOUND"
@@ -1098,7 +1098,7 @@ copy_to_clipboard() {
 # Copy a URL to the clipboard
 copy_url_to_clipboard() {
     local url="$1"
-    
+
     if [[ "$(uname)" == "Darwin" ]]; then
         # Use macOS native clipboard
         echo -n "$url" | pbcopy
@@ -1107,35 +1107,35 @@ copy_url_to_clipboard() {
     else
         local display_server
         display_server=$(detect_display_server)
-        
+
         case "$display_server" in
-            "wayland")
-                if command -v wl-copy &> /dev/null; then
-                    log_info "Using wl-copy for Wayland clipboard operations"
-                    echo -n "$url" | wl-copy
-                    clipboard_content=$(wl-paste 2>&1 | tr -d '\0')
-                else
-                    log_error "wl-copy not found. Please install wl-clipboard"
-                    return 1
-                fi
-                ;;
-            "x11")
-                if command -v xclip &> /dev/null; then
-                    log_info "Using xclip for X11 clipboard operations"
-                    echo -n "$url" | xclip -selection clipboard
-                    clipboard_content=$(xclip -selection clipboard -o)
-                else
-                    log_error "xclip not found. Please install xclip"
-                    return 1
-                fi
-                ;;
-            *)
-                log_error "No supported display server detected"
+        "wayland")
+            if command -v wl-copy &>/dev/null; then
+                log_info "Using wl-copy for Wayland clipboard operations"
+                echo -n "$url" | wl-copy
+                clipboard_content=$(wl-paste 2>&1 | tr -d '\0')
+            else
+                log_error "wl-copy not found. Please install wl-clipboard"
                 return 1
-                ;;
+            fi
+            ;;
+        "x11")
+            if command -v xclip &>/dev/null; then
+                log_info "Using xclip for X11 clipboard operations"
+                echo -n "$url" | xclip -selection clipboard
+                clipboard_content=$(xclip -selection clipboard -o)
+            else
+                log_error "xclip not found. Please install xclip"
+                return 1
+            fi
+            ;;
+        *)
+            log_error "No supported display server detected"
+            return 1
+            ;;
         esac
     fi
-    
+
     log_info "URL copied to clipboard: $clipboard_content"
     fyi_call "HyprUpld" "Image URL copied to clipboard: $clipboard_content"
     play_sound "$LINK_SOUND"
@@ -1144,15 +1144,15 @@ copy_url_to_clipboard() {
 # Retrieve the authentication key for the specified service
 get_authentication() {
     local service="$1"
-    
+
     # Skip authentication for imgur
     if [[ "$service" == "imgur" ]]; then
         auth=""
         return
     fi
-    
+
     log_step "Retrieving authentication key for $service"
-    
+
     auth=$(get_saved_value "${service}_auth")
     if [[ -z "$auth" ]]; then
         log_info "No saved auth key found for $service, prompting user"
@@ -1169,11 +1169,11 @@ get_authentication() {
 # Initialize the script by checking requirements and setting up the environment
 initialize_script() {
     check_system_requirements
-    check_python  # Check for Python installation
+    check_python # Check for Python installation
     ensure_config_dir
     ensure_sound_files
     validate_config
-    
+
     if [[ "$os_type" == "macos" ]]; then
         distro="macOS $(sw_vers -productVersion)"
         desktop_env="aqua"
@@ -1182,35 +1182,35 @@ initialize_script() {
         distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
         desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
     fi
-    
+
     log_info "Detected distribution: $distro"
     log_info "Detected desktop environment: $desktop_env"
-    
+
     check_dependencies
 }
 
 # Main function to execute the script
 main() {
     # Ensure the config directory exists
-    mkdir -p "$CONFIG_DIR"  # Ensure the config directory exists
-    : > "$CONFIG_DIR/debug.log"  # Clear the debug.log file
-    exec > >(tee -a "$CONFIG_DIR/debug.log") 2>&1  # Redirect output to debug.log
+    mkdir -p "$CONFIG_DIR"                        # Ensure the config directory exists
+    : >"$CONFIG_DIR/debug.log"                    # Clear the debug.log file
+    exec > >(tee -a "$CONFIG_DIR/debug.log") 2>&1 # Redirect output to debug.log
 
     # Initialize flags for saving and muting
     save_enabled=false
     mute_enabled=false
     silent_enabled=false
-    
+
     initialize_script
     parse_arguments "$@"
-    
+
     if [[ -n "$service" && "$auth_required" == true ]]; then
         get_authentication "$service" || exit 1
     fi
-    
+
     take_screenshot || exit 1
     handle_upload || exit 1
-    
+
     log_success "Operation completed successfully"
     return 0
 }
@@ -1228,23 +1228,23 @@ handle_update() {
 
     log_step "Updating hyprupld..."
     cd "$HOME/hyprupld" || exit 1
-    
+
     log_info "Pulling latest changes from repository..."
     if ! git pull; then
         log_error "Failed to pull latest changes"
         exit 1
     fi
-    
+
     if ! bash compile.sh; then
         log_error "Compilation failed"
         exit 1
     fi
-    
+
     if ! bash install_scripts.sh; then
         log_error "Installation failed"
         exit 1
     fi
-    
+
     log_success "hyprupld has been updated successfully"
     exit 0
 }
@@ -1264,12 +1264,12 @@ prompt_for_update() {
 # Print the version of the script and check for updates
 print_version() {
     echo "$VERSION"
-    
+
     # Exit early if using dev version
     if [[ "$VERSION" == "hyprupld-dev" ]]; then
         exit 0
     fi
-    
+
     # Get latest release info from GitHub
     log_info "Checking for updates..."
     latest_release=$(curl -s "$GITHUB_API_URL" | tr -d '\r' | tr -d '\n')
@@ -1277,7 +1277,7 @@ print_version() {
 
     # Attempt to extract the published date
     latest_date=$(python3 -c "import json; print(json.loads('''$latest_release''')['created_at'])" 2>/dev/null)
-    
+
     if [[ $? -ne 0 ]]; then
         log_error "Failed to decode JSON response from GitHub API."
         exit 1
@@ -1302,7 +1302,7 @@ play_sound() {
         return 0
     fi
     local sound_file="$1"
-    
+
     # Check if sound file exists
     if [[ ! -f "$sound_file" ]]; then
         log_warning "Sound file not found: $sound_file"
@@ -1311,17 +1311,17 @@ play_sound() {
 
     if [[ "$(uname)" == "Darwin" ]]; then
         # Use macOS native audio player
-        afplay "$sound_file" &> /dev/null
+        afplay "$sound_file" &>/dev/null
     else
         # Try different Linux audio players in order of preference
-        if command -v paplay &> /dev/null; then
-            paplay "$sound_file" &> /dev/null
-        elif command -v play &> /dev/null; then
-            play -q "$sound_file" &> /dev/null
-        elif command -v aplay &> /dev/null; then
-            aplay -q "$sound_file" &> /dev/null
-        elif command -v mpg123 &> /dev/null; then
-            mpg123 -q "$sound_file" &> /dev/null
+        if command -v paplay &>/dev/null; then
+            paplay "$sound_file" &>/dev/null
+        elif command -v play &>/dev/null; then
+            play -q "$sound_file" &>/dev/null
+        elif command -v aplay &>/dev/null; then
+            aplay -q "$sound_file" &>/dev/null
+        elif command -v mpg123 &>/dev/null; then
+            mpg123 -q "$sound_file" &>/dev/null
         else
             log_warning "No supported audio player found. Install pulseaudio-utils, sox, alsa-utils, or mpg123 for sound feedback."
             return 1
@@ -1332,7 +1332,7 @@ play_sound() {
 # Call the notification function based on OS
 fyi_call() {
     if [[ "$silent_enabled" == "true" ]]; then
-        return 0 
+        return 0
     fi
 
     local title="$1"
@@ -1358,7 +1358,7 @@ ensure_sound_files() {
     # Copy sound files from script directory to config directory if they don't exist
     local script_dir
     script_dir="$(dirname "$(readlink -f "$0")")"
-    
+
     for sound in "sstaken.mp3" "clipboard.mp3" "link.mp3"; do
         if [[ ! -f "${SOUND_DIR}/${sound}" && -f "${script_dir}/${sound}" ]]; then
             cp "${script_dir}/${sound}" "${SOUND_DIR}/${sound}"
@@ -1369,7 +1369,7 @@ ensure_sound_files() {
 
 # Function to check if Python is installed
 check_python() {
-    if ! command -v python3 &> /dev/null; then
+    if ! command -v python3 &>/dev/null; then
         log_error "Python 3 is not installed. Please install Python 3 to use this script."
         exit 1
     fi
