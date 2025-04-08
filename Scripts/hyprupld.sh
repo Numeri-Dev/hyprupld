@@ -506,7 +506,7 @@ parse_arguments() {
                     IFS='|' read -r url auth_header <<< "${SERVICES[$service_name]}"
                     service="$service_name"
                     # Skip auth check for imgur
-                    if [[ "$service_name" == "imgur" ]]; then
+                    if [[ "$service_name" == "imgur" || "$service_name" == "zipline" || "$service_name" == "xbackbone" ]]; then
                         auth_required=false
                     else
                         auth_required=true
