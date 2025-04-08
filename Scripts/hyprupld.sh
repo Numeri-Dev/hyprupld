@@ -487,6 +487,7 @@ parse_arguments() {
                 url="${2%/}/api/upload"  # Remove trailing slash if present and append /api/upload
                 auth="$3"
                 auth_header="authorization"
+                auth_required=false
                 shift 3
                 ;;
             -xbackbone)
@@ -498,6 +499,7 @@ parse_arguments() {
                 url="${2%/}/upload"  # Remove trailing slash if present and append /upload
                 auth="$3"
                 auth_header="token"
+                auth_required=false
                 shift 3
                 ;;
             -*)
@@ -506,7 +508,7 @@ parse_arguments() {
                     IFS='|' read -r url auth_header <<< "${SERVICES[$service_name]}"
                     service="$service_name"
                     # Skip auth check for imgur
-                    if [[ "$service_name" == "imgur" || "$service_name" == "zipline" || "$service_name" == "xbackbone" ]]; then
+                    if [[ "$service_name" == "imgur" ]]; then
                         auth_required=false
                     else
                         auth_required=true
@@ -1202,7 +1204,7 @@ main() {
     initialize_script
     parse_arguments "$@"
     
-    if [[ -n "$service" ]]; then
+    if [[ -n "$service" && "$auth_required" == true ]]; then
         get_authentication "$service" || exit 1
     fi
     
