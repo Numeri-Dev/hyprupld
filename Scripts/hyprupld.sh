@@ -234,7 +234,7 @@ check_basic_dependencies() {
 # Detect available package managers on the system
 detect_package_managers() {
     log_step "Detecting package managers..."
-    declare -a managers=("pacman" "apt-get" "dnf" "nix-env" "emerge" "zypper" "xbps-install" "yay" "paru")
+    declare -a managers=("pacman" "apt-get" "dnf" "nix-env" "emerge" "zypper" "xbps-install" "yay" "paru" "brew")
     declare -A manager_names=(
         ["pacman"]="arch"
         ["apt-get"]="debian"
@@ -245,6 +245,7 @@ detect_package_managers() {
         ["xbps-install"]="void"
         ["yay"]="arch_community"
         ["paru"]="arch_community"
+        ["brew"]="macos"
     )
 
     local detected_managers=()
@@ -274,23 +275,43 @@ get_package_managers() {
 # Check for required tools and dependencies
 check_dependencies() {
     log_step "Checking for required tools"
-    local required_packages=("zenity" "python3" "xclip" "fyi")
-    local audio_packages=("pulseaudio-utils" "sox" "alsa-utils" "mpg123")
     local missing_packages=()
     local has_audio_player=false
 
-    # Check for required packages
-    for package in "${required_packages[@]}"; do
-        if ! command -v "$package" &>/dev/null; then
-            missing_packages+=("$package")
-            log_warning "Missing package: $package"
-        else
-            log_info "Found package: $package"
-        fi
-    done
+    # Detect OS type
+    local is_macos=false
+    if [[ "$(uname)" == "Darwin" ]]; then
+        is_macos=true
+    fi
 
-    # Check for audio player availability
-    for player in "paplay" "play" "aplay" "mpg123"; do
+    # Define required packages based on OS
+    if [[ "$is_macos" == true ]]; then
+        # macOS required packages
+        local required_packages=("python3")
+        # Check for Homebrew-installable packages
+        if ! command -v "zenity" &>/dev/null; then
+            missing_packages+=("zenity")
+        fi
+        # macOS has built-in clipboard support (pbcopy/pbpaste)
+        # macOS has built-in audio support (afplay)
+        has_audio_player=true
+    else
+        # Linux required packages
+        local required_packages=("zenity" "python3" "xclip" "fyi")
+        local audio_packages=("pulseaudio-utils" "sox" "alsa-utils" "mpg123")
+
+        # Check for required packages
+        for package in "${required_packages[@]}"; do
+            if ! command -v "$package" &>/dev/null; then
+                missing_packages+=("$package")
+                log_warning "Missing package: $package"
+            else
+                log_info "Found package: $package"
+            fi
+        done
+
+        # Check for audio player availability
+        for player in "paplay" "play" "aplay" "mpg123"; do
         if command -v "$player" &>/dev/null; then
             has_audio_player=true
             log_info "Found audio player: $player"
@@ -354,6 +375,18 @@ install_missing_packages() {
                 "void")
                     handle_gui_installation_void "${missing_packages[@]}"
                     return
+                    ;;
+                "macos")
+                    if command -v brew &> /dev/null; then
+                        log_step "Installing packages with Homebrew..."
+                        if brew install "${missing_packages[@]}"; then
+                            log_success "Successfully installed packages with Homebrew"
+                            return
+                        else
+                            log_error "Failed to install packages with Homebrew"
+                            return 1
+                        fi
+                    fi
                     ;;
                 *)
                     log_warning "Unsupported package manager: $manager"
@@ -1063,35 +1096,43 @@ copy_to_clipboard() {
 # Copy a URL to the clipboard
 copy_url_to_clipboard() {
     local url="$1"
-    local display_server
-    display_server=$(detect_display_server)
     
-    case "$display_server" in
-        "wayland")
-            if command -v wl-copy &> /dev/null; then
-                log_info "Using wl-copy for Wayland clipboard operations"
-                echo -n "$url" | wl-copy
-                clipboard_content=$(wl-paste 2>&1 | tr -d '\0')
-            else
-                log_error "wl-copy not found. Please install wl-clipboard"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # Use macOS native clipboard
+        echo -n "$url" | pbcopy
+        clipboard_content=$(pbpaste)
+        log_info "Using pbcopy/pbpaste for macOS clipboard operations"
+    else
+        local display_server
+        display_server=$(detect_display_server)
+        
+        case "$display_server" in
+            "wayland")
+                if command -v wl-copy &> /dev/null; then
+                    log_info "Using wl-copy for Wayland clipboard operations"
+                    echo -n "$url" | wl-copy
+                    clipboard_content=$(wl-paste 2>&1 | tr -d '\0')
+                else
+                    log_error "wl-copy not found. Please install wl-clipboard"
+                    return 1
+                fi
+                ;;
+            "x11")
+                if command -v xclip &> /dev/null; then
+                    log_info "Using xclip for X11 clipboard operations"
+                    echo -n "$url" | xclip -selection clipboard
+                    clipboard_content=$(xclip -selection clipboard -o)
+                else
+                    log_error "xclip not found. Please install xclip"
+                    return 1
+                fi
+                ;;
+            *)
+                log_error "No supported display server detected"
                 return 1
-            fi
-            ;;
-        "x11")
-            if command -v xclip &> /dev/null; then
-                log_info "Using xclip for X11 clipboard operations"
-                echo -n "$url" | xclip -selection clipboard
-                clipboard_content=$(xclip -selection clipboard -o)
-            else
-                log_error "xclip not found. Please install xclip"
-                return 1
-            fi
-            ;;
-        *)
-            log_error "No supported display server detected"
-            return 1
-            ;;
-    esac
+                ;;
+        esac
+    fi
     
     log_info "URL copied to clipboard: $clipboard_content"
     fyi_call "HyprUpld" "Image URL copied to clipboard: $clipboard_content"
@@ -1266,28 +1307,42 @@ play_sound() {
         return 1
     fi
 
-    # Try different audio players in order of preference
-    if command -v paplay &> /dev/null; then
-        paplay "$sound_file" &> /dev/null
-    elif command -v play &> /dev/null; then
-        play -q "$sound_file" &> /dev/null
-    elif command -v aplay &> /dev/null; then
-        aplay -q "$sound_file" &> /dev/null
-    elif command -v mpg123 &> /dev/null; then
-        mpg123 -q "$sound_file" &> /dev/null
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # Use macOS native audio player
+        afplay "$sound_file" &> /dev/null
     else
-        log_warning "No supported audio player found. Install pulseaudio-utils, sox, alsa-utils, or mpg123 for sound feedback."
-        return 1
+        # Try different Linux audio players in order of preference
+        if command -v paplay &> /dev/null; then
+            paplay "$sound_file" &> /dev/null
+        elif command -v play &> /dev/null; then
+            play -q "$sound_file" &> /dev/null
+        elif command -v aplay &> /dev/null; then
+            aplay -q "$sound_file" &> /dev/null
+        elif command -v mpg123 &> /dev/null; then
+            mpg123 -q "$sound_file" &> /dev/null
+        else
+            log_warning "No supported audio player found. Install pulseaudio-utils, sox, alsa-utils, or mpg123 for sound feedback."
+            return 1
+        fi
     fi
 }
 
-# Call the fyi function for notifications
+# Call the notification function based on OS
 fyi_call() {
     if [[ "$silent_enabled" == "true" ]]; then
         return 0 
     fi
 
-    fyi "$1" "$2"
+    local title="$1"
+    local message="$2"
+
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # Use osascript for macOS notifications
+        osascript -e "display notification \"$message\" with title \"$title\""
+    else
+        # Use fyi for Linux notifications
+        fyi "$title" "$message"
+    fi
 }
 
 # Ensure sound files exist in the specified directory
