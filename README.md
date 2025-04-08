@@ -79,7 +79,6 @@ Options:
   -h, --help     Show this help message
   -reset         Reset all settings
   -s, --save     Save screenshots locally in organized folders
-  -v, --version  Display the current version
   -update        Check for and install updates
   -mute          Mute sound feedback
   -silent        Silent mode (no sound or notification)

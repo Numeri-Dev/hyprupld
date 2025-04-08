@@ -423,10 +423,6 @@ parse_arguments() {
                 display_help
                 exit 0
                 ;;
-            -v|--version)
-                print_version
-                exit 0
-                ;;
             -s|--save)
                 handle_save_option
                 exit 0
@@ -593,11 +589,9 @@ Usage: hyprupld [OPTIONS]
 
 Options:
   -h, --help       Show this help message
-  -v, --version    Display version information
   -debug           Enable debug mode with strict error handling
   -reset           Reset all settings and start fresh
   -h|--help        Show this help message
-  -v|--version     Display version information
   -s, --save       Save screenshots to a specified directory
   -update          Update hyprupld to the latest version
   -mute            Mute sound feedback
