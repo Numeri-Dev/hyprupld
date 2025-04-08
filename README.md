@@ -52,6 +52,7 @@ HyprUpld supports uploading to multiple services:
 - [guns.lol](https://guns.lol)
 - [nest.rip](https://nest.rip)
 - [pixelvault.co](https://pixelvault.co)
+- [imgur](https://imgur.com)
 - **Zipline instances** (self-hosted image hosting)
 - **XBackbone instances** (self-hosted image hosting)
 
@@ -68,6 +69,7 @@ Options:
   -guns          Use guns.lol
   -nest          Use nest.rip
   -pixelvault    Use pixelvault.co
+  -imgur         Use imgur
   -zipline       Use a custom Zipline instance
   -xbackbone     Use a custom XBackbone instance
   -h, --help     Show this help message

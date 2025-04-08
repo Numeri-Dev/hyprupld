@@ -38,6 +38,7 @@ readonly COLOR_RESET='\033[0m'
 service=""
 auth_header=""
 url=""
+auth_required=true
 
 # Service configurations for different upload services
 declare -A SERVICES=(
@@ -46,6 +47,7 @@ declare -A SERVICES=(
     ["ez"]="https://api.e-z.host/files|key"
     ["fakecrime"]="https://upload.fakecrime.bio|Authorization"
     ["nest"]="https://nest.rip/api/files/upload|Authorization"
+    ["imgur"]="https://api.imgur.com/3/upload|"
 )
 
 # Add to the configuration section near other readonly variables
@@ -459,6 +461,12 @@ parse_arguments() {
                 if [[ -n "${SERVICES[$service_name]:-}" ]]; then
                     IFS='|' read -r url auth_header <<< "${SERVICES[$service_name]}"
                     service="$service_name"
+                    # Skip auth check for imgur
+                    if [[ "$service_name" == "imgur" ]]; then
+                        auth_required=false
+                    else
+                        auth_required=true
+                    fi
                     shift
                 else
                     log_error "Unknown option: $1"
@@ -588,6 +596,8 @@ Screenshot Services:
   -nest            Use nest.rip
   -pixelvault      Use pixelvault.co
   -zipline         Use a custom Zipline instance
+  -xbackbone       Use a custom xBackBone instance
+  -imgur           Use imgur.com
 
 Environment Variables:
   HYPRUPLD_CONFIG  Override default config directory
@@ -597,6 +607,7 @@ Examples:
   hyprupld -guns              # Take screenshot and upload to guns.lol
   hyprupld                    # Take screenshot and copy to clipboard
   hyprupld -zipline https://example.com myauthkey  # Use custom Zipline instance
+  hyprupld -xbackbone https://example.com token  # Use custom xBackBone instance
 
 For more information and updates, visit:
 https://github.com/PhoenixAceVFX/hyprupld
@@ -803,6 +814,9 @@ upload_screenshot() {
         "fakecrime")
             upload_to_fakecrime
             ;;
+        "imgur")
+            upload_to_imgur
+            ;;
         *)
             upload_to_generic_service
             ;;
@@ -836,6 +850,45 @@ upload_to_fakecrime() {
     copy_url_to_clipboard "$image_url"
 }
 
+# Upload the screenshot to imgur
+upload_to_imgur() {
+    # Read the image file directly
+    if [[ ! -f "$SCREENSHOT_FILE" ]]; then
+        log_error "Screenshot file not found: $SCREENSHOT_FILE"
+        return 1
+    fi
+    
+    # Try uploading without authentication first (anonymous upload)
+    local response
+    response=$(curl -s -X POST \
+        -H "Content-Type: multipart/form-data" \
+        -F "image=@$SCREENSHOT_FILE" \
+        "https://api.imgur.com/3/upload")
+    
+    # Save response
+    echo "$response" > "$UPLOAD_RESPONSE"
+    
+    # Check if we got a rate limit error
+    if python3 -c "import json; response = json.load(open('$UPLOAD_RESPONSE')); exit(1 if response.get('status') == 429 else 0)" 2>/dev/null; then
+        log_warning "Anonymous upload rate limited, trying with Client-ID..."
+        
+        # Try with Client-ID
+        response=$(curl -s -X POST \
+            -H "Authorization: Client-ID 0f1ac06039c0e0e" \
+            -F "image=@$SCREENSHOT_FILE" \
+            "$url")
+        echo "$response" > "$UPLOAD_RESPONSE"
+    fi
+    
+    # Final check if upload was successful
+    if ! python3 -c "import json; response = json.load(open('$UPLOAD_RESPONSE')); exit(0 if response.get('success') else 1)" 2>/dev/null; then
+        log_error "Failed to upload to Imgur. Response: $(cat "$UPLOAD_RESPONSE")"
+        return 1
+    fi
+    
+    process_upload_response
+}
+
 # Upload the screenshot to a generic service
 upload_to_generic_service() {
     local response
@@ -865,6 +918,15 @@ process_upload_response() {
         "zipline") json_key="files[0].url" ;;
         "xbackbone") json_key="upload" ;;
         "fakecrime") json_key="url" ;;
+        "imgur") 
+            # For imgur, we need to parse the nested JSON structure
+            url=$(python3 -c "import json; print(json.load(open('$UPLOAD_RESPONSE'))['data']['link'])" 2>/dev/null)
+            if [[ -n "$url" ]]; then
+                copy_url_to_clipboard "$url"
+                return 0
+            fi
+            return 1
+            ;;
         *) json_key="resource" ;;
     esac
     
@@ -984,6 +1046,13 @@ copy_url_to_clipboard() {
 # Retrieve the authentication key for the specified service
 get_authentication() {
     local service="$1"
+    
+    # Skip authentication for imgur
+    if [[ "$service" == "imgur" ]]; then
+        auth=""
+        return
+    fi
+    
     log_step "Retrieving authentication key for $service"
     
     auth=$(get_saved_value "${service}_auth")
