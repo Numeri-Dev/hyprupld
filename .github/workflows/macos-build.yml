@@ -1,15 +1,12 @@
 name: Build and Release macOS
 
 on:
-  workflow_dispatch:
-  push:
-    paths:
-      - 'Scripts/**'
-      - 'HyprUpld.png'
-      - 'compile.sh'
-      - 'install_scripts.sh'
-      - 'compile_macos.sh'
-      - 'install_scripts_macos.sh'
+  workflow_run:
+    workflows: ['Build and Release AppImages']
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -64,26 +61,17 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
           fi
 
-      - name: Get Short SHA
-        id: sha
-        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get Latest Release
+        id: latest_release
+        uses: actions/github-script@v6
         with:
-          tag_name: MacOS-${{ steps.sha.outputs.sha }}
-          release_name: Release MacOS ${{ steps.sha.outputs.sha }}
-          body: |
-            ${{ steps.changelog.outputs.changelog }}
-
-            ### Included in this release:
-            - Individual script files (Scripts directory)
-            - Complete installation package (hypr_installer_macos.zip)
-          draft: false
-          prerelease: false
+          script: |
+            const response = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            core.setOutput('release_id', response.data.id);
+            core.setOutput('upload_url', response.data.upload_url);
 
       - name: Upload Assets
         run: |
@@ -96,7 +84,7 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
               -H "Content-Type: text/x-shellscript" \
               --data-binary @"$script" \
-              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=$SCRIPT_NAME"
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.latest_release.outputs.release_id }}/assets?name=$SCRIPT_NAME"
           done
 
           # Upload installer package
@@ -106,4 +94,4 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/zip" \
             --data-binary @"hypr_installer_macos.zip" \
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=hypr_installer_macos.zip"
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.latest_release.outputs.release_id }}/assets?name=hypr_installer_macos.zip"

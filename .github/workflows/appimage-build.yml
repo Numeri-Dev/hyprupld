@@ -78,8 +78,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: Linux-${{ steps.sha.outputs.sha }}
-          release_name: Release Linux ${{ steps.sha.outputs.sha }}
+          tag_name: ${{ steps.sha.outputs.sha }}
+          release_name: Release ${{ steps.sha.outputs.sha }}
           body: |
             ${{ steps.changelog.outputs.changelog }}
 
