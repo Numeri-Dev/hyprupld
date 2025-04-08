@@ -87,6 +87,21 @@ jobs:
               "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.latest_release.outputs.release_id }}/assets?name=$SCRIPT_NAME"
           done
 
+          # Upload .app files
+          for app in Compiled/*.app; do
+            if [ -d "$app" ]; then
+              APP_NAME=$(basename "$app")
+              zip -r "${APP_NAME}.zip" "$app"
+              curl -L \
+                -X POST \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Content-Type: application/zip" \
+                --data-binary @"${APP_NAME}.zip" \
+                "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.latest_release.outputs.release_id }}/assets?name=${APP_NAME}.zip"
+            fi
+          done
+
           # Upload installer package
           curl -L \
             -X POST \
