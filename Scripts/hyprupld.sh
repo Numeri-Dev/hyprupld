@@ -312,23 +312,24 @@ check_dependencies() {
 
         # Check for audio player availability
         for player in "paplay" "play" "aplay" "mpg123"; do
-        if command -v "$player" &>/dev/null; then
-            has_audio_player=true
-            log_info "Found audio player: $player"
-            break
+            if command -v "$player" &>/dev/null; then
+                has_audio_player=true
+                log_info "Found audio player: $player"
+                break
+            fi
+        done
+
+        if [[ "$has_audio_player" == "false" ]]; then
+            log_warning "No audio player found. Installing pulseaudio-utils for sound support"
+            missing_packages+=("pulseaudio-utils")
         fi
-    done
 
-    if [[ "$has_audio_player" == "false" ]]; then
-        log_warning "No audio player found. Installing pulseaudio-utils for sound support"
-        missing_packages+=("pulseaudio-utils")
-    fi
-
-    # Install missing packages if any
-    if [[ ${#missing_packages[@]} -gt 0 ]]; then
-        install_missing_packages "${missing_packages[@]}"
-    else
-        log_success "All required packages are already installed"
+        # Install missing packages if any
+        if [[ ${#missing_packages[@]} -gt 0 ]]; then
+            install_missing_packages "${missing_packages[@]}"
+        else
+            log_success "All required packages are already installed"
+        fi
     fi
 }
 
@@ -342,7 +343,6 @@ install_missing_packages() {
         return
     fi
 
-    # Install missing packages if any
     if [[ ${#missing_packages[@]} -gt 0 ]]; then
         local package_managers
         mapfile -t package_managers < <(python3 -c "import json; print(json.load(open('$PCKMGRS_FILE')))")
