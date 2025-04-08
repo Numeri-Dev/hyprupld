@@ -184,6 +184,12 @@ with open('$temp_file', 'w') as f:
 
 # Check system requirements before running the script
 check_system_requirements() {
+    # Check for unsupported operating systems
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        log_error "Windows WSL is not supported, HyprUpld is only compatible with Linux"
+        exit 1
+    fi
+
     check_display_server
     check_basic_dependencies
 }
