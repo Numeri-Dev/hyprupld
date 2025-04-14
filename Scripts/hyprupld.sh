@@ -792,7 +792,13 @@ take_wayland_screenshot() {
         log_info "Using hyprshot for Hyprland environment"
         if [[ "$uwsm_mode" == "true" ]]; then
             # UWSM mode: More resilient screenshot handling
-            if ! hyprshot -m region -o "$TEMP_DIR" -f "screenshot.png"; then
+            hyprshot -m region -o "$TEMP_DIR" -f "screenshot.png"
+            local exit_code=$?
+            if [[ $exit_code -eq 1 ]]; then
+                # hyprshot returns 1 when user presses escape
+                return 125  # Special code to indicate user cancellation
+                log_debug "User cancelled screenshot"
+            elif [[ $exit_code -ne 0 ]]; then
                 log_warning "hyprshot command failed in UWSM mode, retrying..."
                 sleep 0.5  # Small delay before retry
                 if ! hyprshot -m region -o "$TEMP_DIR" -f "screenshot.png"; then
@@ -1374,8 +1380,16 @@ main() {
         # UWSM mode: Try screenshot up to 3 times
         local retry_count=0
         while [[ $retry_count -lt 3 ]]; do
+            local screenshot_result
             if take_screenshot; then
                 break
+            else
+                screenshot_result=$?
+                # Exit code 125 indicates user cancellation
+                if [[ $screenshot_result -eq 125 ]]; then
+                    log_info "Screenshot cancelled by user"
+                    return 0
+                fi
             fi
             ((retry_count++))
             log_warning "Screenshot attempt $retry_count failed, retrying..."
