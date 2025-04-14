@@ -292,6 +292,14 @@ check_dependencies() {
     local has_audio_player=false
 
     if [[ "$os_type" == "macos" ]]; then
+        # Check if Homebrew is installed
+        if ! command -v "brew" &>/dev/null; then
+            log_error "Homebrew is not installed. Please install it from https://brew.sh"
+            log_info "You can install it by running:"
+            log_info '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+            exit 1
+        fi
+
         # macOS specific dependencies
         if ! command -v "zenity" &>/dev/null; then
             missing_packages+=("zenity")
