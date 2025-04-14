@@ -266,24 +266,11 @@ check_system_requirements() {
         os_type="linux"
         log_info "Detected Linux system"
     fi
-
-    check_display_server
-    check_basic_dependencies
 }
 
-# Detect the display server (Wayland or X11)
-check_display_server() {
-    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
-        echo "wayland"
-    elif [[ -n "${DISPLAY:-}" ]]; then
-        echo "x11"
-    else
-        echo "unknown"
-    fi
-}
-
-# Check for basic dependencies required by the script
 check_basic_dependencies() {
+    log_step "Checking basic dependencies"
+    # These are dependencies required by both macOS and Linux
     local basic_deps=("curl" "python3")
     local missing=()
 
@@ -296,6 +283,80 @@ check_basic_dependencies() {
     if [[ ${#missing[@]} -gt 0 ]]; then
         log_error "Missing basic dependencies: ${missing[*]}"
         exit 1
+    fi
+}
+
+check_dependencies() {
+    log_step "Checking OS-specific dependencies"
+    local missing_packages=()
+    local has_audio_player=false
+
+    if [[ "$os_type" == "macos" ]]; then
+        # macOS specific dependencies
+        if ! command -v "zenity" &>/dev/null; then
+            missing_packages+=("zenity")
+        fi
+
+        # Check for audio playback support
+        if ! command -v "afplay" &>/dev/null; then
+            log_warning "afplay not found. Audio feedback will be disabled"
+        fi
+
+        # Install missing packages if any
+        if [[ ${#missing_packages[@]} -gt 0 ]]; then
+            log_info "Installing missing macOS packages using Homebrew..."
+            for pkg in "${missing_packages[@]}"; do
+                brew install "$pkg" || log_error "Failed to install $pkg"
+            done
+        fi
+    else
+        # Linux specific dependencies
+        local display_server
+        display_server=$(detect_display_server)
+
+        # Check for clipboard utilities
+        if [[ "$display_server" == "wayland" ]]; then
+            if ! command -v "wl-copy" &>/dev/null; then
+                missing_packages+=("wl-clipboard")
+            fi
+        else
+            if ! command -v "xclip" &>/dev/null; then
+                missing_packages+=("xclip")
+            fi
+        fi
+
+        # Check for audio players
+        local audio_players=("paplay" "play" "aplay" "mpg123")
+        for player in "${audio_players[@]}"; do
+            if command -v "$player" &>/dev/null; then
+                has_audio_player=true
+                log_info "Found audio player: $player"
+                break
+            fi
+        done
+
+        if [[ "$has_audio_player" == "false" ]]; then
+            log_warning "No audio player found. Installing pulseaudio-utils for sound support"
+            missing_packages+=("pulseaudio-utils")
+        fi
+
+        # Install missing packages if any
+        if [[ ${#missing_packages[@]} -gt 0 ]]; then
+            install_missing_packages "${missing_packages[@]}"
+        else
+            log_success "All required packages are already installed"
+        fi
+    fi
+}
+
+# Detect the display server (Wayland or X11)
+check_display_server() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+        echo "wayland"
+    elif [[ -n "${DISPLAY:-}" ]]; then
+        echo "x11"
+    else
+        echo "unknown"
     fi
 }
 
@@ -337,67 +398,6 @@ get_package_managers() {
     else
         log_info "No cached package manager information found, detecting..."
         detect_package_managers
-    fi
-}
-
-# Check for required tools and dependencies
-check_dependencies() {
-    log_step "Checking for required tools"
-    local missing_packages=()
-    local has_audio_player=false
-
-    # Detect OS type
-    local is_macos=false
-    if [[ "$(uname)" == "Darwin" ]]; then
-        is_macos=true
-    fi
-
-    # Define required packages based on OS
-    if [[ "$is_macos" == true ]]; then
-        # macOS required packages
-        local required_packages=("python3")
-        # Check for Homebrew-installable packages
-        if ! command -v "zenity" &>/dev/null; then
-            missing_packages+=("zenity")
-        fi
-        # macOS has built-in clipboard support (pbcopy/pbpaste)
-        # macOS has built-in audio support (afplay)
-        has_audio_player=true
-    else
-        # Linux required packages
-        local required_packages=("zenity" "python3" "xclip" "fyi")
-        local audio_packages=("pulseaudio-utils" "sox" "alsa-utils" "mpg123")
-
-        # Check for required packages
-        for package in "${required_packages[@]}"; do
-            if ! command -v "$package" &>/dev/null; then
-                missing_packages+=("$package")
-                log_warning "Missing package: $package"
-            else
-                log_info "Found package: $package"
-            fi
-        done
-
-        # Check for audio player availability
-        for player in "paplay" "play" "aplay" "mpg123"; do
-            if command -v "$player" &>/dev/null; then
-                has_audio_player=true
-                log_info "Found audio player: $player"
-                break
-            fi
-        done
-
-        if [[ "$has_audio_player" == "false" ]]; then
-            log_warning "No audio player found. Installing pulseaudio-utils for sound support"
-            missing_packages+=("pulseaudio-utils")
-        fi
-
-        # Install missing packages if any
-        if [[ ${#missing_packages[@]} -gt 0 ]]; then
-            install_missing_packages "${missing_packages[@]}"
-        else
-            log_success "All required packages are already installed"
-        fi
     fi
 }
 
@@ -858,15 +858,17 @@ take_macos_screenshot() {
         ;;
     "CleanShot X")
         if ! command -v cleanshot &>/dev/null; then
-            log_error "CleanShot X not found. Please install it from https://cleanshot.com"
-            return 1
+            log_error "CleanShot X not found. You can purchase and install it from https://cleanshot.com"
+            log_info "Falling back to built-in screenshot tool..."
+            screencapture -i "$SCREENSHOT_FILE"
         fi
         cleanshot capture --clipboard --save-path "$SCREENSHOT_FILE"
         ;;
     "Xsnapper")
         if ! command -v xsnapper &>/dev/null; then
-            log_error "Xsnapper not found. Please install it from https://xsnapper.com"
-            return 1
+            log_error "Xsnapper not found. You can purchase and install it from https://xsnapper.com"
+            log_info "Falling back to built-in screenshot tool..."
+            screencapture -i "$SCREENSHOT_FILE"
         fi
         xsnapper capture --output "$SCREENSHOT_FILE"
         ;;
@@ -1240,12 +1242,13 @@ get_authentication() {
 
 # Initialize the script by checking requirements and setting up the environment
 initialize_script() {
+    # First detect the OS
     check_system_requirements
-    check_python # Check for Python installation
-    ensure_config_dir
-    ensure_sound_files
-    validate_config
 
+    # Then check basic dependencies common to both OS's
+    check_basic_dependencies
+
+    # Set up environment based on OS
     if [[ "$os_type" == "macos" ]]; then
         distro="macOS $(sw_vers -productVersion)"
         desktop_env="aqua"
@@ -1253,12 +1256,20 @@ initialize_script() {
         # Detect distribution and desktop environment
         distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
         desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
+        # Check display server for Linux only
+        check_display_server
     fi
 
     log_info "Detected distribution: $distro"
     log_info "Detected desktop environment: $desktop_env"
 
+    # Now check OS-specific dependencies
     check_dependencies
+
+    # Finally, set up directories and config
+    ensure_config_dir
+    ensure_sound_files
+    validate_config
 }
 
 # Main function to execute the script
