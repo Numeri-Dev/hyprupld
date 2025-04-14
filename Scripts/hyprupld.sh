@@ -32,6 +32,7 @@ readonly COLOR_YELLOW='\033[0;33m'
 readonly COLOR_BLUE='\033[0;34m'
 readonly COLOR_MAGENTA='\033[0;35m'
 readonly COLOR_CYAN='\033[0;36m'
+readonly COLOR_GRAY='\033[0;37m'
 readonly COLOR_RESET='\033[0m'
 
 # Default values for service, auth header, and URL
@@ -66,41 +67,108 @@ readonly SCREENSHOT_SOUND="${SOUND_DIR}/sstaken.mp3"
 readonly CLIPBOARD_SOUND="${SOUND_DIR}/clipboard.mp3"
 readonly LINK_SOUND="${SOUND_DIR}/link.mp3"
 
+# Add debug level flag
+debug_enabled=false
+
 #==============================================================================
 # Function Definitions
 #==============================================================================
 
 # Logging functions for different log levels
+log_debug() {
+    if [[ "$debug_enabled" == "true" ]]; then
+        local timestamp
+        timestamp=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+        local line_number="${BASH_LINENO[0]}"
+        local calling_function="${FUNCNAME[1]:-main}"
+        echo -e "${COLOR_GRAY}[DEBUG][${timestamp}][${calling_function}:${line_number}]${COLOR_RESET} $1"
+    fi
+}
+
 log_info() {
-    echo -e "${COLOR_BLUE}[INFO]${COLOR_RESET} $1"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+    local line_number="${BASH_LINENO[0]}"
+    local calling_function="${FUNCNAME[1]:-main}"
+    echo -e "${COLOR_BLUE}[INFO][${timestamp}][${calling_function}:${line_number}]${COLOR_RESET} $1"
 }
 
 log_success() {
-    echo -e "${COLOR_GREEN}[SUCCESS]${COLOR_RESET} $1"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+    local line_number="${BASH_LINENO[0]}"
+    local calling_function="${FUNCNAME[1]:-main}"
+    echo -e "${COLOR_GREEN}[SUCCESS][${timestamp}][${calling_function}:${line_number}]${COLOR_RESET} $1"
 }
 
 log_warning() {
-    echo -e "${COLOR_YELLOW}[WARNING]${COLOR_RESET} $1"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+    local line_number="${BASH_LINENO[0]}"
+    local calling_function="${FUNCNAME[1]:-main}"
+    echo -e "${COLOR_YELLOW}[WARNING][${timestamp}][${calling_function}:${line_number}]${COLOR_RESET} $1"
 }
 
 log_error() {
-    echo -e "${COLOR_RED}[ERROR]${COLOR_RESET} $1"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+    local line_number="${BASH_LINENO[0]}"
+    local calling_function="${FUNCNAME[1]:-main}"
+    local stack_trace
+    stack_trace=$(printf '%s\n' "${BASH_SOURCE[@]}")
+    echo -e "${COLOR_RED}[ERROR][${timestamp}][${calling_function}:${line_number}]${COLOR_RESET} $1"
+    echo -e "${COLOR_RED}Stack trace:${COLOR_RESET}\n${stack_trace}"
 }
 
 log_step() {
-    echo -e "${COLOR_CYAN}[STEP]${COLOR_RESET} $1"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+    local line_number="${BASH_LINENO[0]}"
+    local calling_function="${FUNCNAME[1]:-main}"
+    echo -e "${COLOR_CYAN}[STEP][${timestamp}][${calling_function}:${line_number}]${COLOR_RESET} $1"
 }
 
-# Cleanup functions to handle errors and exit
+# Enhanced cleanup functions to handle errors and exit
 cleanup_on_error() {
     local err=$?
-    log_error "An error occurred (Exit code: $err)"
+    local cmd="${BASH_COMMAND}"
+    log_error "An error occurred executing command: '$cmd' (Exit code: $err)"
+    log_debug "Environment variables at time of error:"
+    log_debug "PWD: $PWD"
+    log_debug "PATH: $PATH"
+    log_debug "USER: $USER"
     cleanup_files
     exit "$err"
 }
 
 cleanup_on_exit() {
+    log_debug "Starting cleanup process"
     cleanup_files
+    log_debug "Cleanup completed"
+}
+
+# Enhanced file cleanup with verbose logging
+cleanup_files() {
+    log_debug "Starting file cleanup"
+    if [[ -f "$SCREENSHOT_FILE" ]]; then
+        log_debug "Removing screenshot file: $SCREENSHOT_FILE"
+        rm -f "$SCREENSHOT_FILE"
+    else
+        log_debug "Screenshot file not found: $SCREENSHOT_FILE"
+    fi
+    if [[ -f "$UPLOAD_RESPONSE" ]]; then
+        log_debug "Removing upload response file: $UPLOAD_RESPONSE"
+        rm -f "$UPLOAD_RESPONSE"
+    else
+        log_debug "Upload response file not found: $UPLOAD_RESPONSE"
+    fi
+    if [[ -n "${SUDO_ASKPASS:-}" && -f "$SUDO_ASKPASS" ]]; then
+        log_debug "Removing SUDO_ASKPASS file: $SUDO_ASKPASS"
+        rm -f "$SUDO_ASKPASS"
+    else
+        log_debug "No SUDO_ASKPASS file to remove"
+    fi
+    log_debug "File cleanup completed"
 }
 
 # Remove temporary files created during execution
@@ -445,6 +513,10 @@ parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case $1 in
         -debug)
+            debug_enabled=true
+            shift
+            ;;
+        -strict)
             set -euox pipefail
             shift
             ;;
@@ -624,9 +696,9 @@ Usage: hyprupld [OPTIONS]
 
 Options:
   -h, --help       Show this help message
-  -debug           Enable debug mode with strict error handling
+  -debug           Enable Verbose Debug Logs
+  -strict          Enable Strict Error Handling
   -reset           Reset all settings and start fresh
-  -h|--help        Show this help message
   -s, --save       Save screenshots to a specified directory
   -update          Update hyprupld to the latest version
   -mute            Mute sound feedback
