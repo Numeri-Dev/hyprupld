@@ -10,8 +10,7 @@
 # Repository: https://github.com/PhoenixAceVFX/hyprupld
 #==============================================================================
 
-# Exit on error, undefined variables, and pipe failures
-set -o errexit
+# Exit on undefined variables and pipe failures
 set -o nounset
 set -o pipefail
 
@@ -40,6 +39,8 @@ service=""
 auth_header=""
 url=""
 auth_required=true
+uwsm_mode=false
+is_uwsm_session=false
 
 # Service configurations for different upload services
 declare -A SERVICES=(
@@ -582,6 +583,10 @@ parse_arguments() {
             auth_required=false
             shift 3
             ;;
+        -uwsm)
+            uwsm_mode=true
+            shift
+            ;;
         -*)
             local service_name="${1#-}"
             if [[ -n "${SERVICES[$service_name]:-}" ]]; then
@@ -712,6 +717,7 @@ Options:
   -mute            Mute sound feedback
   -silent          Silent mode (no sound or notification)
   -kill            Kill all running instances of hyprupld
+  -uwsm           Enable UWSM compatibility mode for Hyprland
 
 Screenshot Services:
   -guns            Use guns.lol
@@ -784,12 +790,40 @@ take_screenshot() {
 take_wayland_screenshot() {
     if [[ "$desktop_env" == *"hyprland"* ]]; then
         log_info "Using hyprshot for Hyprland environment"
-        hyprshot -m region -z -s -o "$TEMP_DIR" -f "screenshot.png"
+        if [[ "$uwsm_mode" == "true" ]]; then
+            # UWSM mode: More resilient screenshot handling
+            if ! hyprshot -m region -o "$TEMP_DIR" -f "screenshot.png"; then
+                log_warning "hyprshot command failed in UWSM mode, retrying..."
+                sleep 0.5  # Small delay before retry
+                if ! hyprshot -m region -o "$TEMP_DIR" -f "screenshot.png"; then
+                    log_error "Failed to take screenshot with hyprshot in UWSM mode"
+                    return 1
+                fi
+            fi
+        else
+            # Standard mode
+            hyprshot -m region -z -s -o "$TEMP_DIR" -f "screenshot.png"
+        fi
     else
         log_info "Using grimblast for Wayland/i3 environment"
-        grimblast save area "$SCREENSHOT_FILE"
+        if ! grimblast save area "$SCREENSHOT_FILE"; then
+            log_error "Failed to take screenshot with grimblast"
+            return 1
+        fi
     fi
-    play_sound "$SCREENSHOT_SOUND"
+    
+    if [[ "$uwsm_mode" == "true" ]]; then
+        # UWSM mode: More careful file checking and sound handling
+        if [[ -f "$SCREENSHOT_FILE" ]]; then
+            play_sound "$SCREENSHOT_SOUND" || true  # Don't fail if sound fails
+            return 0
+        else
+            log_error "Screenshot file was not created"
+            return 1
+        fi
+    else
+        play_sound "$SCREENSHOT_SOUND"
+    fi
 }
 
 # Take a screenshot in KDE environments
@@ -1280,12 +1314,39 @@ initialize_script() {
     validate_config
 }
 
+# Check if running under a UWSM managed session
+detect_uwsm_session() {
+    # Check for UWSM specific environment variables and systemd unit
+    if systemctl --user is-active uwsm.service >/dev/null 2>&1 || \
+       [[ -n "${UWSM_MANAGED:-}" ]] || \
+       [[ -f "${XDG_RUNTIME_DIR:-}/uwsm.lock" ]]; then
+        is_uwsm_session=true
+        log_debug "Detected UWSM managed session"
+        if [[ "$uwsm_mode" == "true" ]]; then
+            log_debug "Running with UWSM compatibility mode enabled"
+        else
+            log_debug "UWSM compatibility mode is disabled. Consider using -uwsm for better compatibility"
+        fi
+        return 0
+    fi
+    return 1
+}
+
 # Main function to execute the script
 main() {
     # Ensure the config directory exists
-    mkdir -p "$CONFIG_DIR"                        # Ensure the config directory exists
-    : >"$CONFIG_DIR/debug.log"                    # Clear the debug.log file
-    exec > >(tee -a "$CONFIG_DIR/debug.log") 2>&1 # Redirect output to debug.log
+    if [[ "$uwsm_mode" == "true" ]]; then
+        mkdir -p "$CONFIG_DIR" || {
+            log_error "Failed to create config directory"
+            return 1
+        }
+        : > "$CONFIG_DIR/debug.log" || true  # Don't fail if debug log creation fails
+        exec >> >(tee -a "$CONFIG_DIR/debug.log") 2>&1 || true
+    else
+        mkdir -p "$CONFIG_DIR"
+        : > "$CONFIG_DIR/debug.log"
+        exec >> >(tee -a "$CONFIG_DIR/debug.log") 2>&1
+    fi
 
     # Initialize flags for saving and muting
     save_enabled=false
@@ -1294,13 +1355,47 @@ main() {
 
     initialize_script
     parse_arguments "$@"
+    
+    # Check for UWSM session after parsing arguments
+    detect_uwsm_session
 
     if [[ -n "$service" && "$auth_required" == true ]]; then
-        get_authentication "$service" || exit 1
+        if [[ "$uwsm_mode" == "true" ]]; then
+            if ! get_authentication "$service"; then
+                log_error "Authentication failed"
+                return 1
+            fi
+        else
+            get_authentication "$service" || exit 1
+        fi
     fi
 
-    take_screenshot || exit 1
-    handle_upload || exit 1
+    if [[ "$uwsm_mode" == "true" ]]; then
+        # UWSM mode: Try screenshot up to 3 times
+        local retry_count=0
+        while [[ $retry_count -lt 3 ]]; do
+            if take_screenshot; then
+                break
+            fi
+            ((retry_count++))
+            log_warning "Screenshot attempt $retry_count failed, retrying..."
+            sleep 0.5
+        done
+
+        if [[ $retry_count -eq 3 ]]; then
+            log_error "Failed to take screenshot after 3 attempts"
+            return 1
+        fi
+
+        if ! handle_upload; then
+            log_error "Upload failed"
+            return 1
+        fi
+    else
+        # Standard mode
+        take_screenshot || exit 1
+        handle_upload || exit 1
+    fi
 
     log_success "Operation completed successfully"
     return 0
