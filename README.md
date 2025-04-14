@@ -65,31 +65,40 @@ HyprUpld supports uploading to multiple services:
 HyprUpld offers various command-line options for flexibility:
 
 ```bash
+hyprupld - Screenshot and Upload Utility
+
 Usage: hyprupld [OPTIONS]
 
 Options:
-  -ez            Use e-z.host
-  -fakecrime     Use fakecri.me
-  -guns          Use guns.lol
-  -nest          Use nest.rip
-  -pixelvault    Use pixelvault.co
-  -imgur         Use imgur
-  -zipline       Use a custom Zipline instance
-  -xbackbone     Use a custom XBackbone instance
-  -h, --help     Show this help message
-  -reset         Reset all settings
-  -s, --save     Save screenshots locally in organized folders
-  -update        Check for and install updates
-  -mute          Mute sound feedback
-  -silent        Silent mode (no sound or notification)
-  -kill          Kill all running instances of hyprupld
-  -debug         Enable debug mode with strict error handling
+  -h, --help       Show this help message
+  -debug           Enable Verbose Debug Logs
+  -strict          Enable Strict Error Handling
+  -reset           Reset all settings and start fresh
+  -s, --save       Save screenshots to a specified directory
+  -update          Update hyprupld to the latest version
+  -mute            Mute sound feedback
+  -silent          Silent mode (no sound or notification)
+  -kill            Kill all running instances of hyprupld
+
+Screenshot Services:
+  -guns            Use guns.lol
+  -ez              Use e-z.host
+  -fakecrime       Use fakecri.me
+  -nest            Use nest.rip
+  -pixelvault      Use pixelvault.co
+  -zipline         Use a custom Zipline instance
+  -xbackbone       Use a custom xBackBone instance
+  -imgur           Use imgur.com
+
+Environment Variables:
+  HYPRUPLD_CONFIG  Override default config directory
+  HYPRUPLD_DEBUG   Enable debug output when set to 1
 
 Examples:
-  hyprupld -guns                                    # Upload to guns.lol
-  hyprupld                                         # Copy to clipboard
+  hyprupld -guns              # Take screenshot and upload to guns.lol
+  hyprupld                    # Take screenshot and copy to clipboard
   hyprupld -zipline https://example.com myauthkey  # Use custom Zipline instance
-  hyprupld -xbackbone https://example.com mytoken   # Use custom XBackbone instance
+  hyprupld -xbackbone https://example.com token  # Use custom xBackBone instance
 ```
 
 > **Note:** If no service is selected, the file will be copied to the clipboard.
