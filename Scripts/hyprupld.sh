@@ -1357,7 +1357,7 @@ main() {
     parse_arguments "$@"
     
     # Check for UWSM session after parsing arguments
-    detect_uwsm_session
+    detect_uwsm_session || true  # Allow non-zero return in strict mode
 
     if [[ -n "$service" && "$auth_required" == true ]]; then
         if [[ "$uwsm_mode" == "true" ]]; then
