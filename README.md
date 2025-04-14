@@ -79,6 +79,7 @@ Options:
   -mute            Mute sound feedback
   -silent          Silent mode (no sound or notification)
   -kill            Kill all running instances of hyprupld
+  -uwsm            Enable UWSM compatibility mode for Hyprland
 
 Screenshot Services:
   -guns            Use guns.lol
