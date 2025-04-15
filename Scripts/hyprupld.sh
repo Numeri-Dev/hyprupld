@@ -287,74 +287,40 @@ check_basic_dependencies() {
     fi
 }
 
+check_screenshot_tool() {
+    local tool_name="$1"
+    if ! command -v "$tool_name" &>/dev/null; then
+        log_warning "$tool_name is not installed. Installing..."
+        install_missing_packages "$tool_name"
+    else
+        log_success "$tool_name is already installed"
+    fi
+}
+
 check_dependencies() {
-    log_step "Checking OS-specific dependencies"
+    log_step "Checking minimal required dependencies"
     local missing_packages=()
-    local has_audio_player=false
 
-    if [[ "$os_type" == "macos" ]]; then
-        # Check if Homebrew is installed
-        if ! command -v "brew" &>/dev/null; then
-            log_error "Homebrew is not installed. Please install it from https://brew.sh"
-            log_info "You can install it by running:"
-            log_info '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-            exit 1
-        fi
+    # Only check for clipboard utility based on display server
+    local display_server
+    display_server=$(detect_display_server)
 
-        # macOS specific dependencies
-        if ! command -v "zenity" &>/dev/null; then
-            missing_packages+=("zenity")
-        fi
-
-        # Check for audio playback support
-        if ! command -v "afplay" &>/dev/null; then
-            log_warning "afplay not found. Audio feedback will be disabled"
-        fi
-
-        # Install missing packages if any
-        if [[ ${#missing_packages[@]} -gt 0 ]]; then
-            log_info "Installing missing macOS packages using Homebrew..."
-            for pkg in "${missing_packages[@]}"; do
-                brew install "$pkg" || log_error "Failed to install $pkg"
-            done
+    # Check for clipboard utilities - these are essential for basic functionality
+    if [[ "$display_server" == "wayland" ]]; then
+        if ! command -v "wl-copy" &>/dev/null; then
+            missing_packages+=("wl-clipboard")
         fi
     else
-        # Linux specific dependencies
-        local display_server
-        display_server=$(detect_display_server)
-
-        # Check for clipboard utilities
-        if [[ "$display_server" == "wayland" ]]; then
-            if ! command -v "wl-copy" &>/dev/null; then
-                missing_packages+=("wl-clipboard")
-            fi
-        else
-            if ! command -v "xclip" &>/dev/null; then
-                missing_packages+=("xclip")
-            fi
+        if ! command -v "xclip" &>/dev/null; then
+            missing_packages+=("xclip")
         fi
+    fi
 
-        # Check for audio players
-        local audio_players=("paplay" "play" "aplay" "mpg123")
-        for player in "${audio_players[@]}"; do
-            if command -v "$player" &>/dev/null; then
-                has_audio_player=true
-                log_info "Found audio player: $player"
-                break
-            fi
-        done
-
-        if [[ "$has_audio_player" == "false" ]]; then
-            log_warning "No audio player found. Installing pulseaudio-utils for sound support"
-            missing_packages+=("pulseaudio-utils")
-        fi
-
-        # Install missing packages if any
-        if [[ ${#missing_packages[@]} -gt 0 ]]; then
-            install_missing_packages "${missing_packages[@]}"
-        else
-            log_success "All required packages are already installed"
-        fi
+    # Install only essential packages if any
+    if [[ ${#missing_packages[@]} -gt 0 ]]; then
+        install_missing_packages "${missing_packages[@]}"
+    else
+        log_success "Basic dependencies are installed"
     fi
 }
 
@@ -788,7 +754,10 @@ take_screenshot() {
 
 # Take a screenshot in Wayland environments
 take_wayland_screenshot() {
+    local tool
     if [[ "$desktop_env" == *"hyprland"* ]]; then
+        tool="hyprshot"
+        check_screenshot_tool "$tool"
         log_info "Using hyprshot for Hyprland environment"
         if [[ "$uwsm_mode" == "true" ]]; then
             # UWSM mode: More resilient screenshot handling
@@ -810,12 +779,48 @@ take_wayland_screenshot() {
             # Standard mode
             hyprshot -m region -z -s -o "$TEMP_DIR" -f "screenshot.png"
         fi
+    elif [[ "$desktop_env" == *"plasma"* || "$desktop_env" == *"kde"* ]]; then
+        # For KDE/Plasma, let user choose between spectacle and flameshot
+        tool=$(get_screenshot_tool "plasma" "spectacle" "flameshot")
+        check_screenshot_tool "$tool"
+        log_info "Using $tool for KDE/Plasma environment"
+        
+        case "$tool" in
+            "spectacle")
+                if ! spectacle -r -b -n -o "$SCREENSHOT_FILE"; then
+                    log_error "Failed to take screenshot with Spectacle"
+                    return 1
+                fi
+                ;;
+            "flameshot")
+                if ! flameshot gui --raw > "$SCREENSHOT_FILE"; then
+                    log_error "Failed to take screenshot with Flameshot"
+                    return 1
+                fi
+                ;;
+        esac
     else
-        log_info "Using grimblast for Wayland/i3 environment"
-        if ! grimblast save area "$SCREENSHOT_FILE"; then
-            log_error "Failed to take screenshot with grimblast"
-            return 1
-        fi
+        # For other Wayland environments, let user choose between grimblast and grim+slurp
+        tool=$(get_screenshot_tool "wayland" "grimblast" "grim")
+        check_screenshot_tool "$tool"
+        
+        case "$tool" in
+            "grimblast")
+                log_info "Using grimblast for screenshot"
+                if ! grimblast save area "$SCREENSHOT_FILE"; then
+                    log_error "Failed to take screenshot with grimblast"
+                    return 1
+                fi
+                ;;
+            "grim")
+                log_info "Using grim+slurp for screenshot"
+                check_screenshot_tool "slurp"
+                if ! grim -g "$(slurp)" "$SCREENSHOT_FILE"; then
+                    log_error "Failed to take screenshot with grim+slurp"
+                    return 1
+                fi
+                ;;
+        esac
     fi
     
     if [[ "$uwsm_mode" == "true" ]]; then
