@@ -54,6 +54,7 @@ declare -A SERVICES=(
 
 # Add to the configuration section near other readonly variables
 readonly SAVE_DIR_SETTING="screenshot_save_directory"
+readonly AUDIO_PLAYER_SETTING="preferred_audio_player"
 
 # Add version information
 readonly VERSION="hyprupld-dev"
@@ -503,6 +504,23 @@ parse_arguments() {
             display_help
             exit 0
             ;;
+        --set-audio-player)
+            if [[ -z "$2" ]]; then
+                log_error "Audio player name is required"
+                exit 1
+            fi
+            case "$2" in
+                paplay|play|aplay|mpg123)
+                    save_value "$AUDIO_PLAYER_SETTING" "$2"
+                    log_success "Set preferred audio player to $2"
+                    ;;
+                *)
+                    log_error "Unsupported audio player. Supported players: paplay, play, aplay, mpg123"
+                    exit 1
+                    ;;
+            esac
+            shift 2
+            ;;
         -s | --save)
             handle_save_option
             exit 0
@@ -681,6 +699,7 @@ Options:
   -s, --save       Save screenshots to a specified directory
   -update          Update hyprupld to the latest version
   -mute            Mute sound feedback
+  --set-audio-player <player>  Set preferred audio player (paplay, play, aplay, mpg123)
   -silent          Silent mode (no sound or notification)
   -kill            Kill all running instances of hyprupld
   -uwsm            Enable UWSM compatibility mode for Hyprland
@@ -1518,18 +1537,46 @@ play_sound() {
         # Use macOS native audio player
         afplay "$sound_file" &>/dev/null
     else
-        # Try different Linux audio players in order of preference
-        if command -v paplay &>/dev/null; then
-            paplay "$sound_file" &>/dev/null
-        elif command -v play &>/dev/null; then
-            play -q "$sound_file" &>/dev/null
-        elif command -v aplay &>/dev/null; then
-            aplay -q "$sound_file" &>/dev/null
-        elif command -v mpg123 &>/dev/null; then
-            mpg123 -q "$sound_file" &>/dev/null
+        # Get preferred audio player from settings, if set
+        local preferred_player
+        preferred_player=$(get_saved_value "$AUDIO_PLAYER_SETTING")
+
+        # If no preferred player is set or it's not available, prompt user to select one
+        if [[ -z "$preferred_player" ]] || ! command -v "$preferred_player" &>/dev/null; then
+            if select_audio_player; then
+                preferred_player=$(get_saved_value "$AUDIO_PLAYER_SETTING")
+            fi
+        fi
+
+        if [[ -n "$preferred_player" ]] && command -v "$preferred_player" &>/dev/null; then
+            case "$preferred_player" in
+                paplay)
+                    paplay "$sound_file" &>/dev/null
+                    ;;
+                play)
+                    play -q "$sound_file" &>/dev/null
+                    ;;
+                aplay)
+                    aplay -q "$sound_file" &>/dev/null
+                    ;;
+                mpg123)
+                    mpg123 -q "$sound_file" &>/dev/null
+                    ;;
+            esac
         else
-            log_warning "No supported audio player found. Install pulseaudio-utils, sox, alsa-utils, or mpg123 for sound feedback."
-            return 1
+            # Try different Linux audio players in order of preference
+            if command -v paplay &>/dev/null; then
+                paplay "$sound_file" &>/dev/null
+            elif command -v play &>/dev/null; then
+                play -q "$sound_file" &>/dev/null
+            elif command -v aplay &>/dev/null; then
+                aplay -q "$sound_file" &>/dev/null
+            elif command -v mpg123 &>/dev/null; then
+                mpg123 -q "$sound_file" &>/dev/null
+            else
+                log_warning "No supported audio player found. Install pulseaudio-utils, sox, alsa-utils, or mpg123 for sound feedback."
+                return 1
+            fi
         fi
     fi
 }
@@ -1578,6 +1625,54 @@ check_python() {
         log_error "Python 3 is not installed. Please install Python 3 to use this script."
         exit 1
     fi
+}
+
+# Function to select audio player using Zenity
+select_audio_player() {
+    if ! command -v zenity &>/dev/null; then
+        log_warning "Zenity is not installed. Using default audio player selection."
+        return 1
+    fi
+
+    # Build list of available players
+    local available_players=()
+    local descriptions=(
+        "paplay|PulseAudio Sound Player"
+        "play|SoX Sound Player"
+        "aplay|ALSA Sound Player"
+        "mpg123|MPG123 Audio Player"
+    )
+
+    for desc in "${descriptions[@]}"; do
+        local player=${desc%%|*}
+        local name=${desc#*|}
+        if command -v "$player" &>/dev/null; then
+            available_players+=("$player" "$name")
+        fi
+    done
+
+    if [[ ${#available_players[@]} -eq 0 ]]; then
+        zenity --error \
+            --title="No Audio Players" \
+            --text="No supported audio players found.\nPlease install one of: pulseaudio-utils, sox, alsa-utils, or mpg123."
+        return 1
+    fi
+
+    local selected
+    selected=$(zenity --list \
+        --title="Select Audio Player" \
+        --text="Choose your preferred audio player:" \
+        --column="Player" \
+        --column="Description" \
+        --height=250 \
+        "${available_players[@]}" 2>/dev/null)
+
+    if [[ -n "$selected" ]]; then
+        save_value "$AUDIO_PLAYER_SETTING" "$selected"
+        log_success "Set preferred audio player to $selected"
+        return 0
+    fi
+    return 1
 }
 
 #==============================================================================
