@@ -504,23 +504,6 @@ parse_arguments() {
             display_help
             exit 0
             ;;
-        --set-audio-player)
-            if [[ -z "$2" ]]; then
-                log_error "Audio player name is required"
-                exit 1
-            fi
-            case "$2" in
-                paplay|play|aplay|mpg123)
-                    save_value "$AUDIO_PLAYER_SETTING" "$2"
-                    log_success "Set preferred audio player to $2"
-                    ;;
-                *)
-                    log_error "Unsupported audio player. Supported players: paplay, play, aplay, mpg123"
-                    exit 1
-                    ;;
-            esac
-            shift 2
-            ;;
         -s | --save)
             handle_save_option
             exit 0
@@ -699,7 +682,6 @@ Options:
   -s, --save       Save screenshots to a specified directory
   -update          Update hyprupld to the latest version
   -mute            Mute sound feedback
-  --set-audio-player <player>  Set preferred audio player (paplay, play, aplay, mpg123)
   -silent          Silent mode (no sound or notification)
   -kill            Kill all running instances of hyprupld
   -uwsm            Enable UWSM compatibility mode for Hyprland
@@ -1378,6 +1360,9 @@ main() {
         exec >> >(tee -a "$CONFIG_DIR/debug.log") 2>&1
     fi
 
+    # Ensure audio player is selected before proceeding
+    ensure_audio_player
+
     # Initialize flags for saving and muting
     save_enabled=false
     mute_enabled=false
@@ -1537,16 +1522,9 @@ play_sound() {
         # Use macOS native audio player
         afplay "$sound_file" &>/dev/null
     else
-        # Get preferred audio player from settings, if set
+        # Get preferred audio player from settings
         local preferred_player
         preferred_player=$(get_saved_value "$AUDIO_PLAYER_SETTING")
-
-        # If no preferred player is set or it's not available, prompt user to select one
-        if [[ -z "$preferred_player" ]] || ! command -v "$preferred_player" &>/dev/null; then
-            if select_audio_player; then
-                preferred_player=$(get_saved_value "$AUDIO_PLAYER_SETTING")
-            fi
-        fi
 
         if [[ -n "$preferred_player" ]] && command -v "$preferred_player" &>/dev/null; then
             case "$preferred_player" in
@@ -1564,19 +1542,9 @@ play_sound() {
                     ;;
             esac
         else
-            # Try different Linux audio players in order of preference
-            if command -v paplay &>/dev/null; then
-                paplay "$sound_file" &>/dev/null
-            elif command -v play &>/dev/null; then
-                play -q "$sound_file" &>/dev/null
-            elif command -v aplay &>/dev/null; then
-                aplay -q "$sound_file" &>/dev/null
-            elif command -v mpg123 &>/dev/null; then
-                mpg123 -q "$sound_file" &>/dev/null
-            else
-                log_warning "No supported audio player found. Install pulseaudio-utils, sox, alsa-utils, or mpg123 for sound feedback."
-                return 1
-            fi
+            log_warning "No audio player configured. Sound feedback will be disabled."
+            mute_enabled=true
+            return 1
         fi
     fi
 }
@@ -1625,6 +1593,27 @@ check_python() {
         log_error "Python 3 is not installed. Please install Python 3 to use this script."
         exit 1
     fi
+}
+
+# Function to ensure audio player is selected
+ensure_audio_player() {
+    if [[ "$mute_enabled" == "true" || "$silent_enabled" == "true" ]]; then
+        return 0
+    fi
+
+    local preferred_player
+    preferred_player=$(get_saved_value "$AUDIO_PLAYER_SETTING")
+
+    # If no preferred player is set or it's not available, force selection
+    if [[ -z "$preferred_player" ]] || ! command -v "$preferred_player" &>/dev/null; then
+        log_info "Audio player not configured. Please select your preferred audio player."
+        if ! select_audio_player; then
+            log_error "No audio player selected. Sound feedback will be disabled."
+            mute_enabled=true
+            return 1
+        fi
+    fi
+    return 0
 }
 
 # Function to select audio player using Zenity
