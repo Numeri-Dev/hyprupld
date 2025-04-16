@@ -41,6 +41,8 @@ url=""
 auth_required=true
 uwsm_mode=false
 is_uwsm_session=false
+mute_enabled=false
+silent_enabled=false
 
 # Service configurations for different upload services
 declare -A SERVICES=(
