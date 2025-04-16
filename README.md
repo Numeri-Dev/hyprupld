@@ -6,7 +6,7 @@
 ![Bash Script](https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![Neovim](https://img.shields.io/badge/NeoVim-%2357A143.svg?&style=for-the-badge&logo=neovim&logoColor=white)
 
-**A versatile screenshot and file upload utility for Linux and MacOS (experimental) with multi-platform support**
+**A versatile screenshot and file upload utility for Linux and MacOS with multi-platform support**
 
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://github.com/PhoenixAceVFX/hyprupld/blob/main/LICENSE)
 [![Latest Release](https://img.shields.io/github/v/release/PhoenixAceVFX/hyprupld)](https://github.com/PhoenixAceVFX/hyprupld/releases)
