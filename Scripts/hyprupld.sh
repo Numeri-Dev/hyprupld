@@ -140,7 +140,12 @@ readonly GITHUB_API_URL="https://api.github.com/repos/PhoenixAceVFX/hyprupld/rel
 readonly VERSION_PATTERN="^hyprupld-[0-9]{8}-[0-9]{6}$"
 
 # Sound file paths for feedback
-readonly SOUND_DIR="/usr/local/share/hyprupld/sounds"
+if [[ "$(uname)" == "Darwin" ]]; then
+    # For macOS, use user's local directory
+    readonly SOUND_DIR="${HOME}/.local/share/hyprupld/sounds"
+else
+    readonly SOUND_DIR="/usr/local/share/hyprupld/sounds"
+fi
 readonly SCREENSHOT_SOUND="${SOUND_DIR}/sstaken.mp3"
 readonly CLIPBOARD_SOUND="${SOUND_DIR}/clipboard.mp3"
 readonly LINK_SOUND="${SOUND_DIR}/link.mp3"
@@ -413,7 +418,7 @@ check_dependencies() {
 }
 
 # Detect the display server (Wayland or X11)
-check_display_server() {
+detect_display_server() {
     if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
         echo "wayland"
     elif [[ -n "${DISPLAY:-}" ]]; then
@@ -1652,22 +1657,10 @@ fyi_call() {
 # Ensure sound files exist in the specified directory
 ensure_sound_files() {
     # Create sounds directory if it doesn't exist
-    local sound_dir
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # For macOS, use user's local directory
-        sound_dir="${HOME}/.local/share/hyprupld/sounds"
-    else
-        sound_dir="/usr/local/share/hyprupld/sounds"
-    fi
-    
-    # Update the global SOUND_DIR variable
-    SOUND_DIR="$sound_dir"
-    
     if [[ ! -d "$SOUND_DIR" ]]; then
         mkdir -p "$SOUND_DIR" || {
-            log_warning "Failed to create sounds directory at $SOUND_DIR, falling back to config directory"
-            SOUND_DIR="${CONFIG_DIR}/sounds"
-            mkdir -p "$SOUND_DIR"
+            log_warning "Failed to create sounds directory at $SOUND_DIR"
+            return 1
         }
         log_info "Created sounds directory: $SOUND_DIR"
     fi
@@ -1678,7 +1671,10 @@ ensure_sound_files() {
 
     for sound in "sstaken.mp3" "clipboard.mp3" "link.mp3"; do
         if [[ ! -f "${SOUND_DIR}/${sound}" && -f "${script_dir}/${sound}" ]]; then
-            cp "${script_dir}/${sound}" "${SOUND_DIR}/${sound}"
+            cp "${script_dir}/${sound}" "${SOUND_DIR}/${sound}" || {
+                log_warning "Failed to copy sound file: ${sound}"
+                continue
+            }
             log_info "Copied sound file: ${sound}"
         fi
     done
