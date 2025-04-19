@@ -33,8 +33,12 @@ silent_enabled=false
 save_enabled=false
 debug_enabled=false
 
-# Exit on undefined variables and pipe failures
-set -o nounset
+# Set strict mode based on OS
+if [[ "$(uname)" != "Darwin" ]]; then
+    # Enable strict mode only on non-MacOS systems
+    set -o nounset
+fi
+# Always enable pipefail for better error handling
 set -o pipefail
 
 # ANSI color codes for logging
