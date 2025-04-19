@@ -51,15 +51,70 @@ readonly COLOR_CYAN='\033[0;36m'
 readonly COLOR_GRAY='\033[0;37m'
 readonly COLOR_RESET='\033[0m'
 
+# Set up bash environment
+if [[ "$(uname)" == "Darwin" ]]; then
+    # macOS specific settings
+    export BASH_SILENCE_DEPRECATION_WARNING=1
+    shopt -s expand_aliases 2>/dev/null || true
+    
+    # Provide readlink -f functionality for macOS
+    if ! command -v readlink >/dev/null 2>&1 || ! readlink -f . >/dev/null 2>&1; then
+        readlink() {
+            local target_file=$1
+            local cd_back=$(pwd)
+            
+            if [[ -d "$target_file" ]]; then
+                cd "$target_file"
+                target_file="."
+            else
+                cd "$(dirname "$target_file")"
+                target_file=$(basename "$target_file")
+            fi
+            
+            # Iterate down a (possible) chain of symlinks
+            while [ -L "$target_file" ]; do
+                target_file=$(readlink "$target_file")
+                cd "$(dirname "$target_file")"
+                target_file=$(basename "$target_file")
+            done
+            
+            # Compute the canonicalized name by finding the physical path 
+            # for the directory we're in and appending the target file.
+            local phys_dir=$(pwd -P)
+            local result="$phys_dir/$target_file"
+            cd "$cd_back"
+            echo "$result"
+        }
+    fi
+fi
+
 # Service configurations for different upload services
-declare -A SERVICES=(
-    ["pixelvault"]="https://pixelvault.co|Authorization"
-    ["guns"]="https://guns.lol/api/upload|key"
-    ["ez"]="https://api.e-z.host/files|key"
-    ["fakecrime"]="https://upload.fakecrime.bio|Authorization"
-    ["nest"]="https://nest.rip/api/files/upload|Authorization"
-    ["imgur"]="https://api.imgur.com/3/upload|"
-)
+# Use a more compatible way to define service configurations
+init_services() {
+    # Initialize service URLs and auth headers
+    services_url["pixelvault"]="https://pixelvault.co"
+    services_auth["pixelvault"]="Authorization"
+    
+    services_url["guns"]="https://guns.lol/api/upload"
+    services_auth["guns"]="key"
+    
+    services_url["ez"]="https://api.e-z.host/files"
+    services_auth["ez"]="key"
+    
+    services_url["fakecrime"]="https://upload.fakecrime.bio"
+    services_auth["fakecrime"]="Authorization"
+    
+    services_url["nest"]="https://nest.rip/api/files/upload"
+    services_auth["nest"]="Authorization"
+    
+    services_url["imgur"]="https://api.imgur.com/3/upload"
+    services_auth["imgur"]=""
+}
+
+# Initialize empty associative arrays for services
+declare services_url
+declare services_auth
+init_services
 
 # Add to the configuration section near other readonly variables
 readonly SAVE_DIR_SETTING="screenshot_save_directory"
@@ -264,9 +319,23 @@ check_system_requirements() {
     if [[ "$(uname)" == "Darwin" ]]; then
         os_type="macos"
         log_info "Detected macOS system"
-        if [[ "$DEBUG" == "true" ]]; then
-            log_warning "MacOS Support is Experimental"
+        
+        # Check macOS version
+        local macos_version
+        macos_version=$(sw_vers -productVersion)
+        if [[ $(echo "$macos_version" | cut -d. -f1) -lt 10 ]]; then
+            log_error "Unsupported macOS version: $macos_version. Minimum required is 10.0"
+            exit 1
         fi
+        
+        # Check for required macOS tools
+        for tool in screencapture pbcopy pbpaste osascript; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+                log_error "Required macOS tool not found: $tool"
+                exit 1
+            fi
+        done
+        
     elif grep -qi microsoft /proc/version 2>/dev/null; then
         log_error "Windows WSL is not supported, HyprUpld is only compatible with Linux and MacOS"
         exit 1
@@ -345,31 +414,49 @@ check_display_server() {
 # Detect available package managers on the system
 detect_package_managers() {
     log_step "Detecting package managers..."
-    declare -a managers=("pacman" "apt-get" "dnf" "nix-env" "emerge" "zypper" "xbps-install" "yay" "paru" "brew")
-    declare -A manager_names=(
-        ["pacman"]="arch"
-        ["apt-get"]="debian"
-        ["dnf"]="fedora"
-        ["nix-env"]="nixos"
-        ["emerge"]="gentoo"
-        ["zypper"]="opensuse"
-        ["xbps-install"]="void"
-        ["yay"]="arch_community"
-        ["paru"]="arch_community"
-        ["brew"]="macos"
-    )
+    
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # On macOS, we only need to check for Homebrew
+        if command -v brew >/dev/null 2>&1; then
+            log_info "Found package manager: brew (Homebrew)"
+            echo '["macos"]' > "$PCKMGRS_FILE"
+            log_success "Detected package manager: Homebrew"
+            echo "macos"
+            return 0
+        else
+            log_warning "Homebrew not found. Visit https://brew.sh to install it"
+            echo '[]' > "$PCKMGRS_FILE"
+            return 0
+        fi
+    fi
 
-    local detected_managers=()
-    for manager in "${managers[@]}"; do
-        if command -v "$manager" &>/dev/null; then
-            detected_managers+=("${manager_names[$manager]}")
-            log_info "Found package manager: $manager (${manager_names[$manager]})"
+    # For Linux systems, check all possible package managers
+    local managers="pacman apt-get dnf nix-env emerge zypper xbps-install yay paru"
+    local detected_managers=""
+
+    for manager in $managers; do
+        if command -v "$manager" >/dev/null 2>&1; then
+            case "$manager" in
+                "pacman") detected_managers="$detected_managers arch ";;
+                "apt-get") detected_managers="$detected_managers debian ";;
+                "dnf") detected_managers="$detected_managers fedora ";;
+                "nix-env") detected_managers="$detected_managers nixos ";;
+                "emerge") detected_managers="$detected_managers gentoo ";;
+                "zypper") detected_managers="$detected_managers opensuse ";;
+                "xbps-install") detected_managers="$detected_managers void ";;
+                "yay"|"paru") detected_managers="$detected_managers arch_community ";;
+            esac
+            log_info "Found package manager: $manager"
         fi
     done
 
-    printf '%s\n' "${detected_managers[@]}" | python3 -c "import sys, json; json.dump(sys.stdin.read().splitlines(), sys.stdout)" >"$PCKMGRS_FILE"
-    log_success "Detected package managers: ${detected_managers[*]}"
-    echo "${detected_managers[@]}"
+    # Trim trailing space
+    detected_managers="${detected_managers% }"
+    
+    # Create JSON array using Python
+    echo "$detected_managers" | python3 -c "import sys, json; json.dump(sys.stdin.read().split(), sys.stdout)" > "$PCKMGRS_FILE"
+    log_success "Detected package managers: $detected_managers"
+    echo "$detected_managers"
 }
 
 # Get cached package manager information or detect it
@@ -393,6 +480,24 @@ install_missing_packages() {
         return
     fi
 
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # On macOS, only try to use Homebrew
+        if command -v brew >/dev/null 2>&1; then
+            log_step "Installing packages with Homebrew..."
+            if brew install "${missing_packages[@]}"; then
+                log_success "Successfully installed packages with Homebrew"
+                return 0
+            else
+                log_error "Failed to install packages with Homebrew"
+                return 1
+            fi
+        else
+            log_error "Homebrew not found. Please install Homebrew from https://brew.sh"
+            return 1
+        fi
+    fi
+
+    # For Linux systems, proceed with package manager detection and installation
     if [[ ${#missing_packages[@]} -gt 0 ]]; then
         local package_managers
         mapfile -t package_managers < <(python3 -c "import json; print(json.load(open('$PCKMGRS_FILE')))")
@@ -425,18 +530,6 @@ install_missing_packages() {
             "void")
                 handle_gui_installation_void "${missing_packages[@]}"
                 return
-                ;;
-            "macos")
-                if command -v brew &>/dev/null; then
-                    log_step "Installing packages with Homebrew..."
-                    if brew install "${missing_packages[@]}"; then
-                        log_success "Successfully installed packages with Homebrew"
-                        return
-                    else
-                        log_error "Failed to install packages with Homebrew"
-                        return 1
-                    fi
-                fi
                 ;;
             *)
                 log_warning "Unsupported package manager: $manager"
@@ -562,8 +655,8 @@ parse_arguments() {
             ;;
         -*)
             local service_name="${1#-}"
-            if [[ -n "${SERVICES[$service_name]:-}" ]]; then
-                IFS='|' read -r url auth_header <<<"${SERVICES[$service_name]}"
+            if [[ -n "${services_url[$service_name]:-}" ]]; then
+                IFS='|' read -r url auth_header <<<"${services_url[$service_name]}|${services_auth[$service_name]}"
                 service="$service_name"
                 # Skip auth check for imgur
                 if [[ "$service_name" == "imgur" ]]; then
@@ -909,36 +1002,13 @@ take_deepin_screenshot() {
 
 # Take a screenshot in macOS
 take_macos_screenshot() {
-    local tool
-    tool=$(get_screenshot_tool "macos" "Built-in" "CleanShot X" "Xsnapper")
-
-    case "$tool" in
-    "Built-in")
-        screencapture -i "$SCREENSHOT_FILE"
-        ;;
-    "CleanShot X")
-        if ! command -v cleanshot &>/dev/null; then
-            log_error "CleanShot X not found. You can purchase and install it from https://cleanshot.com"
-            log_info "Falling back to built-in screenshot tool..."
-            screencapture -i "$SCREENSHOT_FILE"
-        fi
-        cleanshot capture --clipboard --save-path "$SCREENSHOT_FILE"
-        ;;
-    "Xsnapper")
-        if ! command -v xsnapper &>/dev/null; then
-            log_error "Xsnapper not found. You can purchase and install it from https://xsnapper.com"
-            log_info "Falling back to built-in screenshot tool..."
-            screencapture -i "$SCREENSHOT_FILE"
-        fi
-        xsnapper capture --output "$SCREENSHOT_FILE"
-        ;;
-    *)
-        log_error "Invalid screenshot tool selected for macOS"
+    log_info "Taking screenshot on macOS using screencapture"
+    if ! screencapture -i "$SCREENSHOT_FILE"; then
+        log_error "Failed to take screenshot with screencapture"
         return 1
-        ;;
-    esac
-
+    fi
     play_sound "$SCREENSHOT_SOUND"
+    return 0
 }
 
 # Take a screenshot in MATE environments
@@ -979,8 +1049,9 @@ get_screenshot_tool() {
     tool=$(get_saved_value "${de}_tool")
     if [[ -z "$tool" ]]; then
         log_info "No preferred screenshot tool saved, prompting user"
+        # Use tr for uppercase conversion instead of ${de^^}
         tool=$(zenity --list --radiolist \
-            --title="${de^^} Screenshot Tool" \
+            --title="$(echo "$de" | tr '[:lower:]' '[:upper:]') Screenshot Tool" \
             --text="Choose your preferred screenshot tool:" \
             --column="" --column="Tool" \
             TRUE "$default_tool" \
@@ -1156,28 +1227,22 @@ process_upload_response() {
     copy_url_to_clipboard "$url"
 }
 
-# Detect the display server (Wayland or X11)
-detect_display_server() {
-    if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
-        echo "wayland"
-    elif [[ -n "${DISPLAY:-}" ]]; then
-        echo "x11"
-    else
-        echo "unknown"
-    fi
-}
-
 # Copy the screenshot to the clipboard
 copy_to_clipboard() {
     log_step "Copying screenshot to clipboard"
 
-    if [[ "$os_type" == "macos" ]]; then
-        if ! osascript -e 'set the clipboard to (read (POSIX file "'"$SCREENSHOT_FILE"'") as JPEG picture)'; then
-            log_error "Failed to copy screenshot to clipboard using osascript"
-            return 1
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # Use macOS native clipboard with error handling
+        if ! osascript -e 'set the clipboard to (read (POSIX file "'"$SCREENSHOT_FILE"'") as JPEG picture)' 2>/dev/null; then
+            log_warning "Failed to copy as JPEG, trying PNG format..."
+            if ! osascript -e 'set the clipboard to (read (POSIX file "'"$SCREENSHOT_FILE"'") as PNG picture)' 2>/dev/null; then
+                log_error "Failed to copy screenshot to clipboard"
+                return 1
+            fi
         fi
+        # Get image info using sips
         local image_info
-        image_info=$(sips -g pixelWidth -g pixelHeight "$SCREENSHOT_FILE" | tail -n2 | tr '\n' ' ')
+        image_info=$(sips -g pixelWidth -g pixelHeight "$SCREENSHOT_FILE" 2>/dev/null | tail -n2 | tr '\n' ' ' || echo "Image info not available")
         log_info "Direct image copied to clipboard. $image_info"
     else
         local display_server
@@ -1576,8 +1641,23 @@ fyi_call() {
 # Ensure sound files exist in the specified directory
 ensure_sound_files() {
     # Create sounds directory if it doesn't exist
+    local sound_dir
+    if [[ "$(uname)" == "Darwin" ]]; then
+        # For macOS, use user's local directory
+        sound_dir="${HOME}/.local/share/hyprupld/sounds"
+    else
+        sound_dir="/usr/local/share/hyprupld/sounds"
+    fi
+    
+    # Update the global SOUND_DIR variable
+    SOUND_DIR="$sound_dir"
+    
     if [[ ! -d "$SOUND_DIR" ]]; then
-        mkdir -p "$SOUND_DIR"
+        mkdir -p "$SOUND_DIR" || {
+            log_warning "Failed to create sounds directory at $SOUND_DIR, falling back to config directory"
+            SOUND_DIR="${CONFIG_DIR}/sounds"
+            mkdir -p "$SOUND_DIR"
+        }
         log_info "Created sounds directory: $SOUND_DIR"
     fi
 
