@@ -90,31 +90,43 @@ fi
 
 # Service configurations for different upload services
 # Use a more compatible way to define service configurations
-init_services() {
-    # Initialize service URLs and auth headers
-    services_url["pixelvault"]="https://pixelvault.co"
-    services_auth["pixelvault"]="Authorization"
-    
-    services_url["guns"]="https://guns.lol/api/upload"
-    services_auth["guns"]="key"
-    
-    services_url["ez"]="https://api.e-z.host/files"
-    services_auth["ez"]="key"
-    
-    services_url["fakecrime"]="https://upload.fakecrime.bio"
-    services_auth["fakecrime"]="Authorization"
-    
-    services_url["nest"]="https://nest.rip/api/files/upload"
-    services_auth["nest"]="Authorization"
-    
-    services_url["imgur"]="https://api.imgur.com/3/upload"
-    services_auth["imgur"]=""
+get_service_config() {
+    local service_name="$1"
+    case "$service_name" in
+        "pixelvault")
+            url="https://pixelvault.co"
+            auth_header="Authorization"
+            ;;
+        "guns")
+            url="https://guns.lol/api/upload"
+            auth_header="key"
+            ;;
+        "ez")
+            url="https://api.e-z.host/files"
+            auth_header="key"
+            ;;
+        "fakecrime")
+            url="https://upload.fakecrime.bio"
+            auth_header="Authorization"
+            ;;
+        "nest")
+            url="https://nest.rip/api/files/upload"
+            auth_header="Authorization"
+            ;;
+        "imgur")
+            url="https://api.imgur.com/3/upload"
+            auth_header=""
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    return 0
 }
 
 # Initialize empty associative arrays for services
 declare services_url
 declare services_auth
-init_services
 
 # Add to the configuration section near other readonly variables
 readonly SAVE_DIR_SETTING="screenshot_save_directory"
@@ -655,8 +667,7 @@ parse_arguments() {
             ;;
         -*)
             local service_name="${1#-}"
-            if [[ -n "${services_url[$service_name]:-}" ]]; then
-                IFS='|' read -r url auth_header <<<"${services_url[$service_name]}|${services_auth[$service_name]}"
+            if get_service_config "$service_name"; then
                 service="$service_name"
                 # Skip auth check for imgur
                 if [[ "$service_name" == "imgur" ]]; then
