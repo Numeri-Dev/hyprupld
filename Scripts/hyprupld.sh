@@ -10,10 +10,6 @@
 # Repository: https://github.com/PhoenixAceVFX/hyprupld
 #==============================================================================
 
-# Exit on undefined variables and pipe failures
-set -o nounset
-set -o pipefail
-
 # Configuration paths for settings and package managers
 readonly CONFIG_DIR="${HOME}/.config/hyprupld"
 readonly SETTINGS_FILE="${CONFIG_DIR}/settings.json"
@@ -24,6 +20,23 @@ readonly TEMP_DIR="/tmp"
 readonly SCREENSHOT_FILE="${TEMP_DIR}/screenshot.png"
 readonly UPLOAD_RESPONSE="${TEMP_DIR}/upload.json"
 
+# Initialize variables with default values
+service=""
+auth_header=""
+url=""
+auth=""
+auth_required=true
+uwsm_mode=false
+is_uwsm_session=false
+mute_enabled=false
+silent_enabled=false
+save_enabled=false
+debug_enabled=false
+
+# Exit on undefined variables and pipe failures
+set -o nounset
+set -o pipefail
+
 # ANSI color codes for logging
 readonly COLOR_RED='\033[0;31m'
 readonly COLOR_GREEN='\033[0;32m'
@@ -33,16 +46,6 @@ readonly COLOR_MAGENTA='\033[0;35m'
 readonly COLOR_CYAN='\033[0;36m'
 readonly COLOR_GRAY='\033[0;37m'
 readonly COLOR_RESET='\033[0m'
-
-# Default values for service, auth header, and URL
-service=""
-auth_header=""
-url=""
-auth_required=true
-uwsm_mode=false
-is_uwsm_session=false
-mute_enabled=false
-silent_enabled=false
 
 # Service configurations for different upload services
 declare -A SERVICES=(
@@ -70,9 +73,6 @@ readonly SOUND_DIR="/usr/local/share/hyprupld/sounds"
 readonly SCREENSHOT_SOUND="${SOUND_DIR}/sstaken.mp3"
 readonly CLIPBOARD_SOUND="${SOUND_DIR}/clipboard.mp3"
 readonly LINK_SOUND="${SOUND_DIR}/link.mp3"
-
-# Add debug level flag
-debug_enabled=false
 
 #==============================================================================
 # Function Definitions
