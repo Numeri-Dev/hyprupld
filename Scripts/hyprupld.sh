@@ -404,35 +404,95 @@ install_special_package() {
     local package_name="$1"
     case "$package_name" in
         "hyprshot")
-            # Check if we're on an Arch-based system first
+            # First check if git is installed, we'll need it
+            if ! command -v git &>/dev/null; then
+                log_warning "git is required for installation. Installing git first..."
+                install_missing_packages "git"
+            fi
+
+            # Detect the distribution and handle accordingly
             if command -v pacman &>/dev/null; then
-                # Try to find an AUR helper
+                # Arch-based system
                 if command -v yay &>/dev/null; then
                     log_info "Installing hyprshot using yay..."
                     if ! yay -S --noconfirm hyprshot; then
                         log_error "Failed to install hyprshot with yay"
-                        show_manual_install_instructions "hyprshot"
-                        exit 1
+                        install_hyprshot_from_source
                     fi
                 elif command -v paru &>/dev/null; then
                     log_info "Installing hyprshot using paru..."
                     if ! paru -S --noconfirm hyprshot; then
                         log_error "Failed to install hyprshot with paru"
-                        show_manual_install_instructions "hyprshot"
-                        exit 1
+                        install_hyprshot_from_source
                     fi
                 else
-                    log_warning "No AUR helper found (yay/paru)"
-                    show_manual_install_instructions "hyprshot"
-                    exit 1
+                    log_warning "No AUR helper found (yay/paru), installing from source..."
+                    install_hyprshot_from_source
                 fi
             else
-                # Not on Arch Linux, show manual installation instructions
-                show_manual_install_instructions "hyprshot"
-                exit 1
+                # Other distributions - install from source
+                install_hyprshot_from_source
             fi
             ;;
     esac
+}
+
+install_hyprshot_from_source() {
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    log_info "Installing hyprshot from source in $temp_dir"
+
+    # Install dependencies first
+    install_hyprshot_dependencies
+
+    # Clone and install hyprshot
+    if ! git clone https://github.com/Gustash/hyprshot.git "$temp_dir"; then
+        log_error "Failed to clone hyprshot repository"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    cd "$temp_dir" || exit 1
+
+    # Create askpass script for sudo
+    local sudo_password
+    sudo_password=$(zenity --password --title="Authentication Required for hyprshot installation") || exit 1
+    local askpass_script
+    askpass_script=$(mktemp)
+    echo '#!/bin/sh' >"$askpass_script"
+    echo "echo '$sudo_password'" >>"$askpass_script"
+    chmod +x "$askpass_script"
+    export SUDO_ASKPASS="$askpass_script"
+
+    # Install using make
+    if ! sudo -A make install; then
+        log_error "Failed to install hyprshot"
+        rm -f "$askpass_script"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    # Cleanup
+    rm -f "$askpass_script"
+    rm -rf "$temp_dir"
+    log_success "Successfully installed hyprshot from source"
+}
+
+install_hyprshot_dependencies() {
+    local deps=()
+
+    # Check for required tools
+    for tool in "grim" "slurp" "wl-clipboard" "jq"; do
+        if ! command -v "$tool" &>/dev/null; then
+            deps+=("$tool")
+        fi
+    done
+
+    # If we have dependencies to install
+    if [ ${#deps[@]} -ne 0 ]; then
+        log_info "Installing hyprshot dependencies: ${deps[*]}"
+        install_missing_packages "${deps[@]}"
+    fi
 }
 
 show_manual_install_instructions() {
