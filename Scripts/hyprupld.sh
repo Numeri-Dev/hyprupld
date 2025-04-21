@@ -348,7 +348,10 @@ check_system_requirements() {
         # Check for required macOS tools
         for tool in screencapture pbcopy pbpaste osascript; do
             if ! command -v "$tool" >/dev/null 2>&1; then
-                log_error "Required macOS tool not found: $tool"
+                log_error "Critical macOS system tool not found: $tool"
+                log_error "This tool is a built-in macOS utility and should be pre-installed."
+                log_error "If this tool is missing, your macOS installation may be damaged."
+                log_error "Please contact Apple Support or reinstall macOS to resolve this issue."
                 exit 1
             fi
         done
