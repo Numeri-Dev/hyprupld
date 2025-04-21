@@ -387,10 +387,64 @@ check_screenshot_tool() {
     local tool_name="$1"
     if ! command -v "$tool_name" &>/dev/null; then
         log_warning "$tool_name is not installed. Installing..."
-        install_missing_packages "$tool_name"
+        case "$tool_name" in
+            "hyprshot")
+                install_special_package "$tool_name"
+                ;;
+            *)
+                install_missing_packages "$tool_name"
+                ;;
+        esac
     else
         log_success "$tool_name is already installed"
     fi
+}
+
+install_special_package() {
+    local package_name="$1"
+    case "$package_name" in
+        "hyprshot")
+            # Check if we're on an Arch-based system first
+            if command -v pacman &>/dev/null; then
+                # Try to find an AUR helper
+                if command -v yay &>/dev/null; then
+                    log_info "Installing hyprshot using yay..."
+                    if ! yay -S --noconfirm hyprshot; then
+                        log_error "Failed to install hyprshot with yay"
+                        show_manual_install_instructions "hyprshot"
+                        exit 1
+                    fi
+                elif command -v paru &>/dev/null; then
+                    log_info "Installing hyprshot using paru..."
+                    if ! paru -S --noconfirm hyprshot; then
+                        log_error "Failed to install hyprshot with paru"
+                        show_manual_install_instructions "hyprshot"
+                        exit 1
+                    fi
+                else
+                    log_warning "No AUR helper found (yay/paru)"
+                    show_manual_install_instructions "hyprshot"
+                    exit 1
+                fi
+            else
+                # Not on Arch Linux, show manual installation instructions
+                show_manual_install_instructions "hyprshot"
+                exit 1
+            fi
+            ;;
+    esac
+}
+
+show_manual_install_instructions() {
+    local package_name="$1"
+    case "$package_name" in
+        "hyprshot")
+            zenity --info \
+                --title="Manual Installation Required" \
+                --text="hyprshot needs to be installed manually.\n\nPlease follow these steps:\n\n1. git clone https://github.com/Gustash/hyprshot.git\n2. cd hyprshot\n3. sudo make install\n\nOr if you're using Arch Linux, install an AUR helper (yay/paru) first." \
+                --width=400
+            ;;
+    esac
 }
 
 check_dependencies() {
@@ -585,6 +639,21 @@ handle_gui_installation_debian() {
 # Handle GUI installation for Arch-based systems
 handle_gui_installation_arch() {
     local missing_packages=("$@")
+    
+    # First check if we have an AUR helper for special packages
+    local install_cmd="sudo -S pacman -S --noconfirm"
+    local aur_helper=""
+    
+    if command -v yay &>/dev/null; then
+        aur_helper="yay"
+    elif command -v paru &>/dev/null; then
+        aur_helper="paru"
+    fi
+    
+    if [[ -n "$aur_helper" ]]; then
+        install_cmd="$aur_helper -S --noconfirm"
+    fi
+    
     if ! zenity --question \
         --title="Package Installation" \
         --text="This script needs to install the following packages:\n\n${missing_packages[*]}\n\nDo you want to proceed?" \
@@ -597,7 +666,14 @@ handle_gui_installation_arch() {
     sudo_password=$(zenity --password --title="Authentication Required") || exit 1
     askpass_script="$(mktemp)"
     echo '#!/bin/sh' >"$askpass_script"
-    echo "echo '$sudo_password' | sudo -S pacman -S --noconfirm ${missing_packages[*]}" >>"$askpass_script"
+    
+    # If using an AUR helper, we don't need sudo
+    if [[ -n "$aur_helper" ]]; then
+        echo "$install_cmd ${missing_packages[*]}" >>"$askpass_script"
+    else
+        echo "echo '$sudo_password' | $install_cmd ${missing_packages[*]}" >>"$askpass_script"
+    fi
+    
     chmod +x "$askpass_script"
     export SUDO_ASKPASS="$askpass_script"
     (bash "$askpass_script" &)
