@@ -56,13 +56,13 @@ if [[ "$(uname)" == "Darwin" ]]; then
     # macOS specific settings
     export BASH_SILENCE_DEPRECATION_WARNING=1
     shopt -s expand_aliases 2>/dev/null || true
-    
+
     # Provide readlink -f functionality for macOS
     if ! command -v readlink >/dev/null 2>&1 || ! readlink -f . >/dev/null 2>&1; then
         readlink() {
             local target_file=$1
             local cd_back=$(pwd)
-            
+
             if [[ -d "$target_file" ]]; then
                 cd "$target_file"
                 target_file="."
@@ -70,15 +70,15 @@ if [[ "$(uname)" == "Darwin" ]]; then
                 cd "$(dirname "$target_file")"
                 target_file=$(basename "$target_file")
             fi
-            
+
             # Iterate down a (possible) chain of symlinks
             while [ -L "$target_file" ]; do
                 target_file=$(readlink "$target_file")
                 cd "$(dirname "$target_file")"
                 target_file=$(basename "$target_file")
             done
-            
-            # Compute the canonicalized name by finding the physical path 
+
+            # Compute the canonicalized name by finding the physical path
             # for the directory we're in and appending the target file.
             local phys_dir=$(pwd -P)
             local result="$phys_dir/$target_file"
@@ -93,33 +93,33 @@ fi
 get_service_config() {
     local service_name="$1"
     case "$service_name" in
-        "pixelvault")
-            url="https://pixelvault.co"
-            auth_header="Authorization"
-            ;;
-        "guns")
-            url="https://guns.lol/api/upload"
-            auth_header="key"
-            ;;
-        "ez")
-            url="https://api.e-z.host/files"
-            auth_header="key"
-            ;;
-        "fakecrime")
-            url="https://upload.fakecrime.bio"
-            auth_header="Authorization"
-            ;;
-        "nest")
-            url="https://nest.rip/api/files/upload"
-            auth_header="Authorization"
-            ;;
-        "imgur")
-            url="https://api.imgur.com/3/upload"
-            auth_header=""
-            ;;
-        *)
-            return 1
-            ;;
+    "pixelvault")
+        url="https://pixelvault.co"
+        auth_header="Authorization"
+        ;;
+    "guns")
+        url="https://guns.lol/api/upload"
+        auth_header="key"
+        ;;
+    "ez")
+        url="https://api.e-z.host/files"
+        auth_header="key"
+        ;;
+    "fakecrime")
+        url="https://upload.fakecrime.bio"
+        auth_header="Authorization"
+        ;;
+    "nest")
+        url="https://nest.rip/api/files/upload"
+        auth_header="Authorization"
+        ;;
+    "imgur")
+        url="https://api.imgur.com/3/upload"
+        auth_header=""
+        ;;
+    *)
+        return 1
+        ;;
     esac
     return 0
 }
@@ -336,7 +336,7 @@ check_system_requirements() {
     if [[ "$(uname)" == "Darwin" ]]; then
         os_type="macos"
         log_info "Detected macOS system"
-        
+
         # Check macOS version
         local macos_version
         macos_version=$(sw_vers -productVersion)
@@ -344,7 +344,7 @@ check_system_requirements() {
             log_error "Unsupported macOS version: $macos_version. Minimum required is 10.0"
             exit 1
         fi
-        
+
         # Check for required macOS tools
         for tool in screencapture pbcopy pbpaste osascript; do
             if ! command -v "$tool" >/dev/null 2>&1; then
@@ -355,7 +355,7 @@ check_system_requirements() {
                 exit 1
             fi
         done
-        
+
     elif grep -qi microsoft /proc/version 2>/dev/null; then
         log_error "Windows WSL is not supported, HyprUpld is only compatible with Linux and MacOS"
         exit 1
@@ -434,18 +434,18 @@ detect_display_server() {
 # Detect available package managers on the system
 detect_package_managers() {
     log_step "Detecting package managers..."
-    
+
     if [[ "$(uname)" == "Darwin" ]]; then
         # On macOS, we only need to check for Homebrew
         if command -v brew >/dev/null 2>&1; then
             log_info "Found package manager: brew (Homebrew)"
-            echo '["macos"]' > "$PCKMGRS_FILE"
+            echo '["macos"]' >"$PCKMGRS_FILE"
             log_success "Detected package manager: Homebrew"
             echo "macos"
             return 0
         else
             log_warning "Homebrew not found. Visit https://brew.sh to install it"
-            echo '[]' > "$PCKMGRS_FILE"
+            echo '[]' >"$PCKMGRS_FILE"
             return 0
         fi
     fi
@@ -457,14 +457,14 @@ detect_package_managers() {
     for manager in $managers; do
         if command -v "$manager" >/dev/null 2>&1; then
             case "$manager" in
-                "pacman") detected_managers="$detected_managers arch ";;
-                "apt-get") detected_managers="$detected_managers debian ";;
-                "dnf") detected_managers="$detected_managers fedora ";;
-                "nix-env") detected_managers="$detected_managers nixos ";;
-                "emerge") detected_managers="$detected_managers gentoo ";;
-                "zypper") detected_managers="$detected_managers opensuse ";;
-                "xbps-install") detected_managers="$detected_managers void ";;
-                "yay"|"paru") detected_managers="$detected_managers arch_community ";;
+            "pacman") detected_managers="$detected_managers arch " ;;
+            "apt-get") detected_managers="$detected_managers debian " ;;
+            "dnf") detected_managers="$detected_managers fedora " ;;
+            "nix-env") detected_managers="$detected_managers nixos " ;;
+            "emerge") detected_managers="$detected_managers gentoo " ;;
+            "zypper") detected_managers="$detected_managers opensuse " ;;
+            "xbps-install") detected_managers="$detected_managers void " ;;
+            "yay" | "paru") detected_managers="$detected_managers arch_community " ;;
             esac
             log_info "Found package manager: $manager"
         fi
@@ -472,9 +472,9 @@ detect_package_managers() {
 
     # Trim trailing space
     detected_managers="${detected_managers% }"
-    
+
     # Create JSON array using Python
-    echo "$detected_managers" | python3 -c "import sys, json; json.dump(sys.stdin.read().split(), sys.stdout)" > "$PCKMGRS_FILE"
+    echo "$detected_managers" | python3 -c "import sys, json; json.dump(sys.stdin.read().split(), sys.stdout)" >"$PCKMGRS_FILE"
     log_success "Detected package managers: $detected_managers"
     echo "$detected_managers"
 }
@@ -884,11 +884,11 @@ take_wayland_screenshot() {
             local exit_code=$?
             if [[ $exit_code -eq 1 ]]; then
                 # hyprshot returns 1 when user presses escape
-                return 125  # Special code to indicate user cancellation
+                return 125 # Special code to indicate user cancellation
                 log_debug "User cancelled screenshot"
             elif [[ $exit_code -ne 0 ]]; then
                 log_warning "hyprshot command failed in UWSM mode, retrying..."
-                sleep 0.5  # Small delay before retry
+                sleep 0.5 # Small delay before retry
                 if ! hyprshot -m region -z -s -o "$TEMP_DIR" -f "screenshot.png"; then
                     log_error "Failed to take screenshot with hyprshot in UWSM mode"
                     return 1
@@ -903,49 +903,49 @@ take_wayland_screenshot() {
         tool=$(get_screenshot_tool "plasma" "spectacle" "flameshot")
         check_screenshot_tool "$tool"
         log_info "Using $tool for KDE/Plasma environment"
-        
+
         case "$tool" in
-            "spectacle")
-                if ! spectacle -r -b -n -o "$SCREENSHOT_FILE"; then
-                    log_error "Failed to take screenshot with Spectacle"
-                    return 1
-                fi
-                ;;
-            "flameshot")
-                if ! flameshot gui --raw > "$SCREENSHOT_FILE"; then
-                    log_error "Failed to take screenshot with Flameshot"
-                    return 1
-                fi
-                ;;
+        "spectacle")
+            if ! spectacle -r -b -n -o "$SCREENSHOT_FILE"; then
+                log_error "Failed to take screenshot with Spectacle"
+                return 1
+            fi
+            ;;
+        "flameshot")
+            if ! flameshot gui --raw >"$SCREENSHOT_FILE"; then
+                log_error "Failed to take screenshot with Flameshot"
+                return 1
+            fi
+            ;;
         esac
     else
         # For other Wayland environments, let user choose between grimblast and grim+slurp
         tool=$(get_screenshot_tool "wayland" "grimblast" "grim")
         check_screenshot_tool "$tool"
-        
+
         case "$tool" in
-            "grimblast")
-                log_info "Using grimblast for screenshot"
-                if ! grimblast save area "$SCREENSHOT_FILE"; then
-                    log_error "Failed to take screenshot with grimblast"
-                    return 1
-                fi
-                ;;
-            "grim")
-                log_info "Using grim+slurp for screenshot"
-                check_screenshot_tool "slurp"
-                if ! grim -g "$(slurp)" "$SCREENSHOT_FILE"; then
-                    log_error "Failed to take screenshot with grim+slurp"
-                    return 1
-                fi
-                ;;
+        "grimblast")
+            log_info "Using grimblast for screenshot"
+            if ! grimblast save area "$SCREENSHOT_FILE"; then
+                log_error "Failed to take screenshot with grimblast"
+                return 1
+            fi
+            ;;
+        "grim")
+            log_info "Using grim+slurp for screenshot"
+            check_screenshot_tool "slurp"
+            if ! grim -g "$(slurp)" "$SCREENSHOT_FILE"; then
+                log_error "Failed to take screenshot with grim+slurp"
+                return 1
+            fi
+            ;;
         esac
     fi
-    
+
     if [[ "$uwsm_mode" == "true" ]]; then
         # UWSM mode: More careful file checking and sound handling
         if [[ -f "$SCREENSHOT_FILE" ]]; then
-            play_sound "$SCREENSHOT_SOUND" || true  # Don't fail if sound fails
+            play_sound "$SCREENSHOT_SOUND" || true # Don't fail if sound fails
             return 0
         else
             log_error "Screenshot file was not created"
@@ -1419,9 +1419,9 @@ initialize_script() {
 # Check if running under a UWSM managed session
 detect_uwsm_session() {
     # Check for UWSM specific environment variables and systemd unit
-    if systemctl --user is-active uwsm.service >/dev/null 2>&1 || \
-       [[ -n "${UWSM_MANAGED:-}" ]] || \
-       [[ -f "${XDG_RUNTIME_DIR:-}/uwsm.lock" ]]; then
+    if systemctl --user is-active uwsm.service >/dev/null 2>&1 ||
+        [[ -n "${UWSM_MANAGED:-}" ]] ||
+        [[ -f "${XDG_RUNTIME_DIR:-}/uwsm.lock" ]]; then
         is_uwsm_session=true
         log_debug "Detected UWSM managed session"
         if [[ "$uwsm_mode" == "true" ]]; then
@@ -1442,11 +1442,11 @@ main() {
             log_error "Failed to create config directory"
             return 1
         }
-        : > "$CONFIG_DIR/debug.log" || true  # Don't fail if debug log creation fails
+        : >"$CONFIG_DIR/debug.log" || true # Don't fail if debug log creation fails
         exec >> >(tee -a "$CONFIG_DIR/debug.log") 2>&1 || true
     else
         mkdir -p "$CONFIG_DIR"
-        : > "$CONFIG_DIR/debug.log"
+        : >"$CONFIG_DIR/debug.log"
         exec >> >(tee -a "$CONFIG_DIR/debug.log") 2>&1
     fi
 
@@ -1460,9 +1460,9 @@ main() {
 
     initialize_script
     parse_arguments "$@"
-    
+
     # Check for UWSM session after parsing arguments
-    detect_uwsm_session || true  # Allow non-zero return in strict mode
+    detect_uwsm_session || true # Allow non-zero return in strict mode
 
     if [[ -n "$service" && "$auth_required" == true ]]; then
         if [[ "$uwsm_mode" == "true" ]]; then
@@ -1618,18 +1618,18 @@ play_sound() {
 
         if [[ -n "$preferred_player" ]] && command -v "$preferred_player" &>/dev/null; then
             case "$preferred_player" in
-                paplay)
-                    paplay "$sound_file" &>/dev/null
-                    ;;
-                play)
-                    play -q "$sound_file" &>/dev/null
-                    ;;
-                aplay)
-                    aplay -q "$sound_file" &>/dev/null
-                    ;;
-                mpg123)
-                    mpg123 -q "$sound_file" &>/dev/null
-                    ;;
+            paplay)
+                paplay "$sound_file" &>/dev/null
+                ;;
+            play)
+                play -q "$sound_file" &>/dev/null
+                ;;
+            aplay)
+                aplay -q "$sound_file" &>/dev/null
+                ;;
+            mpg123)
+                mpg123 -q "$sound_file" &>/dev/null
+                ;;
             esac
         else
             log_warning "No audio player configured. Sound feedback will be disabled."
