@@ -1,6 +1,6 @@
 # Maintainer: Bubblegum <bubblegum@arch-linux.pro>
 pkgname=hyprupld
-pkgver=0.0.0.r0.gxxxxxxx
+pkgver=d8160d8.r0.gd8160d8
 pkgrel=1
 pkgdesc="Hyprland screenshot and screen recording utility"
 arch=('x86_64')
@@ -20,6 +20,8 @@ pkgver() {
 build() {
   cd "$srcdir/$pkgname"
   chmod +x compile.sh
+  # Unset SOURCE_DATE_EPOCH to prevent conflict with mksquashfs
+  unset SOURCE_DATE_EPOCH
   ./compile.sh
 }
 
