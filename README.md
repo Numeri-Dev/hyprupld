@@ -26,6 +26,7 @@
 - [About](#about)
 - [Resources](#resources)
 - [License](#license)
+- [Cleanup/Uninstall](#cleanupuninstall)
 
 ---
 
