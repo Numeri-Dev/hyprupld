@@ -220,6 +220,22 @@ To install:
 2. Run `bash compile.sh` to build from source
 3. Run `bash install_scripts.sh`
 
+## Cleanup/Uninstall
+
+To remove HyprUpld and all its components from your system, run:
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/cleanup.sh)"
+```
+
+The cleanup script will:
+- Remove all installed binaries and symlinks
+- Remove configuration files (with confirmation)
+- Remove sound files (with confirmation)
+- Remove source directory (with confirmation)
+- Clean up any remaining components
+
+The script is interactive and will ask for confirmation before removing each component, ensuring you don't accidentally delete anything important.
+
 ## Dependencies
 
 ### Core Tools
