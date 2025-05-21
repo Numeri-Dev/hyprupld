@@ -1537,7 +1537,7 @@ initialize_script() {
         distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
         desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
         # Check display server for Linux only
-        check_display_server
+        detect_display_server
     fi
 
     log_info "Detected distribution: $distro"
