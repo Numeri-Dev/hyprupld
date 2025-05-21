@@ -761,7 +761,6 @@ parse_arguments() {
             ;;
         -s | --save)
             handle_save_option
-            exit 0
             ;;
         -update)
             handle_update
