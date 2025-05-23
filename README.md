@@ -5,6 +5,7 @@
 ![Arch](https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff&style=for-the-badge)
 ![Bash Script](https://img.shields.io/badge/bash_script-%23121011.svg?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![Neovim](https://img.shields.io/badge/NeoVim-%2357A143.svg?&style=for-the-badge&logo=neovim&logoColor=white)
+[![Discord](https://img.shields.io/discord/1253122047354077258?color=5865F2&label=discord&logo=discord&logoColor=white&style=for-the-badge)](https://discord.gg/PPTyhTAb6r)
 
 **A versatile screenshot and file upload utility for Linux and MacOS with multi-platform support**
 
@@ -118,6 +119,24 @@ When using the `-s` or `--save` option, HyprUpld will:
 - Save files with format: `hyprupld-YYYYMMDD-HHMMSS.png`
 
 Example directory structure:
+```
+~/Pictures/
+└── hyprupld/
+    ├── january-2024/
+    │   ├── hyprupld-20240115-143022.png
+    │   ├── hyprupld-20240118-091545.png
+    │   └── hyprupld-20240125-162033.png
+    ├── february-2024/
+    │   ├── hyprupld-20240203-104512.png
+    │   └── hyprupld-20240220-155847.png
+    ├── march-2024/
+    │   ├── hyprupld-20240308-120934.png
+    │   ├── hyprupld-20240315-094728.png
+    │   └── hyprupld-20240329-183651.png
+    └── april-2024/
+        ├── hyprupld-20240401-141205.png
+        └── hyprupld-20240412-095533.png
+```
 
 ### Additional Features
 
@@ -196,8 +215,20 @@ For more information, visit the [official website](https://hyprupld.space).
 
 ## Resources
 
-- [Readme](https://github.com/PhoenixAceVFX/hyprupld/blob/main/README.md)
-- [Releases](https://github.com/PhoenixAceVFX/hyprupld/releases)
+- **GitHub Discussions**: Join the conversation, ask questions, and share ideas in our [Discussions](https://github.com/PhoenixAceVFX/hyprupld/discussions) section
+- **Issues**: Report bugs and request features in the [Issues](https://github.com/PhoenixAceVFX/hyprupld/issues) section
+- **Website**: Visit the [official website](https://hyprupld.space) for more information
+
+---
+
+## Contributing
+
+We welcome contributions to HyprUpld! Please see our [Contributing Guidelines](CONTRIBUTING.md) for detailed information on:
+
+- How to report bugs and request features
+- Development setup and workflow
+- Code style and standards
+- Submitting pull requests
 
 ---
 
@@ -269,6 +300,28 @@ Please use the [Issues](../../issues) section to:
 - Report bugs
 - Request new features
 - Request additional upload service support
+
+---
+
+## Frequently Asked Questions
+
+### **Q: Why isn't my screenshot tool being detected?**
+A: HyprUpld automatically detects your desktop environment and suggests appropriate screenshot tools. If detection fails, you can manually install the recommended tool for your DE or use the debug mode (`hyprupld -debug`) to troubleshoot.
+
+### **Q: How do I set up custom keybindings?**
+A: The setup depends on your desktop environment. After installation, configure your DE's keyboard shortcuts to run `hyprupld` with your preferred options (e.g., `hyprupld -guns` for guns.lol upload).
+
+### **Q: Can I use multiple upload services?**
+A: Yes! You can configure multiple services and switch between them using different command-line flags. Each service can have its own API key stored securely.
+
+### **Q: My upload is failing. How do I troubleshoot?**
+A: First, try running with debug mode (`hyprupld -debug`) to see detailed logs. Check your internet connection, verify your API keys are correct, and ensure the upload service is accessible.
+
+### **Q: Where are my API keys stored?**
+A: API keys are stored securely in `~/.config/hyprupld/` with appropriate file permissions. You can reset all settings using `hyprupld -reset` if needed.
+
+### **Q: Does HyprUpld work on Wayland?**
+A: Yes! HyprUpld automatically detects your display server (X11/Wayland) and uses the appropriate clipboard and screenshot tools.
 
 ---
 
