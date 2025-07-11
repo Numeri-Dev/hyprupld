@@ -38,7 +38,11 @@ To install HyprUpld, execute the following one-line command in your terminal:
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
 ```
-### Arch Linux PKGBUILD
+### Arch Linux PKGBUILD from AUR
+```bash
+yay -S hyprupld-git
+```
+### Arch Linux PKGBUILD from Github
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/PKGBUILD.sh)"
 ```
