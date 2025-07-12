@@ -799,7 +799,7 @@ parse_arguments() {
                 exit 1
             fi
             service="xbackbone"
-            url="${2%/}/upload" # Remove trailing slash if present and append /upload
+            url="$2/upload"
             auth="$3"
             auth_header="token"
             auth_required=false
@@ -1331,12 +1331,26 @@ upload_to_imgur() {
 
 # Upload the screenshot to a generic service
 upload_to_generic_service() {
-    local response
+    local file_form_name="file"
+    if [[ "$service" == "xbackbone" ]]; then
+        file_form_name="upload"
+    fi
+    local curl_opts=()
+    if [[ "$service" == "xbackbone" ]]; then
+        # XBackbone expects the token as a form field
+        if [[ -n "$auth" ]]; then
+            curl_opts+=(-F "$auth_header=$auth")
+        fi
+    elif [[ -n "$auth" ]]; then
+        # Other services expect an auth header
+        curl_opts+=(-H "$auth_header: $auth")
+    fi
+
     response=$(curl -s -X POST "$url" \
         -H "Content-Type: multipart/form-data" \
         -H "User-Agent: Mozilla/5.0 (Wayland; Linux x86_64; rv:$firefox_version) Gecko/20100101 Firefox/$firefox_version" \
-        -H "$auth_header: $auth" \
-        -F "file=@$SCREENSHOT_FILE" \
+        "${curl_opts[@]}" \
+        -F "$file_form_name=@$SCREENSHOT_FILE" \
         -o "$UPLOAD_RESPONSE")
 
     process_upload_response
@@ -1356,7 +1370,7 @@ process_upload_response() {
     "guns") json_key="link" ;;
     "ez") json_key="imageUrl" ;;
     "zipline") json_key="files[0].url" ;;
-    "xbackbone") json_key="upload" ;;
+    "xbackbone") json_key="url" ;;
     "fakecrime") json_key="url" ;;
     "imgur")
         # For imgur, we need to parse the nested JSON structure
@@ -1367,11 +1381,22 @@ process_upload_response() {
         fi
         return 1
         ;;
-    *) json_key="resource" ;;
+    *) # Default case for other services
+        log_debug "Using default JSON parsing for service: $service"
+        url=$(python3 -c "import json; print(json.load(open('$UPLOAD_RESPONSE')).get('url', ''))" 2>/dev/null)
+        ;;
     esac
 
-    local url
-    url=$(python3 -c "import json; print(json.load(open('$UPLOAD_RESPONSE')).get('$json_key', ''))")
+    if [[ -z "$json_key" ]]; then
+        # This block is for the default case
+        if [[ -z "$url" || "$url" == "null" ]]; then
+            log_debug "Failed to get 'url', trying to grep for a URL as a fallback."
+            url=$(grep -o 'https://[^"\"]*' "$UPLOAD_RESPONSE" | head -n 1)
+        fi
+    else
+        # This block is for services with a specific json_key
+        url=$(python3 -c "import json; print(json.load(open('$UPLOAD_RESPONSE')).get('$json_key', ''))" 2>/dev/null)
+    fi
 
     # Check if the URL is empty or null
     if [[ -z "$url" || "$url" == "null" ]]; then
