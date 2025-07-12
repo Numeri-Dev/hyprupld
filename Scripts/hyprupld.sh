@@ -1219,12 +1219,20 @@ get_screenshot_tool() {
 
 # Verify that the screenshot was successfully taken
 verify_screenshot() {
-    if [[ ! -f "$SCREENSHOT_FILE" ]]; then
-        log_error "Failed to take screenshot"
-        return 1
-    fi
-    log_success "Screenshot saved to $SCREENSHOT_FILE"
-    return 0
+    local retries=5
+    local delay=0.1
+
+    for ((i = 0; i < retries; i++)); do
+        if [[ -f "$SCREENSHOT_FILE" && -s "$SCREENSHOT_FILE" ]]; then
+            log_success "Screenshot taken successfully"
+            return 0
+        fi
+        sleep "$delay"
+    done
+
+    log_error "Screenshot failed or the file is empty after multiple attempts"
+    cleanup_files
+    exit 1
 }
 
 # Handle the upload process for the screenshot
