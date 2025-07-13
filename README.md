@@ -228,6 +228,7 @@ For more information, visit the [official website](https://hyprupld.space).
 ## Contributing
 
 We welcome contributions to HyprUpld! Please see our [Contributing Guidelines](CONTRIBUTING.md) for detailed information on:
+[➡️ Full Documentation (User & Developer Guides)](docs/README.md)
 
 - How to report bugs and request features
 - Development setup and workflow
