@@ -330,6 +330,12 @@ A: Yes! HyprUpld automatically detects your display server (X11/Wayland) and use
 
 ---
 
+## Stats
+
+![Alt](https://repobeats.axiom.co/api/embed/c3816c0c02e6b8d7a6ccc05d1506f2eaf788dc5e.svg "Repobeats analytics image")
+
+---
+
 ## License
 
 This project is licensed under the [GPL-2.0 License](https://github.com/PhoenixAceVFX/hyprupld/blob/main/LICENSE).
