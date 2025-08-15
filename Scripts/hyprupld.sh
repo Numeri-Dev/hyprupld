@@ -1123,16 +1123,45 @@ take_xfce_screenshot() {
 
 # Take a screenshot in GNOME environments
 take_gnome_screenshot() {
-    local tool
+    local tool pid
     tool=$(get_screenshot_tool "gnome" "GNOME-Screenshot" "Flameshot")
 
     if [[ "$tool" == "GNOME-Screenshot" ]]; then
-        gnome-screenshot -a -f "$SCREENSHOT_FILE"
+        # Start gnome-screenshot in the background and get its PID
+        gnome-screenshot -a -f "$SCREENSHOT_FILE" & pid=$!
+        
+        # Wait for the screenshot to complete or timeout after 10 seconds
+        if ! wait "$pid" 2>/dev/null; then
+            # If wait fails, the process might still be running
+            if kill -0 "$pid" 2>/dev/null; then
+                log_warning "GNOME screenshot taking too long, terminating..."
+                kill -TERM "$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null
+                
+                # Fall back to Flameshot if available
+                if command -v flameshot &>/dev/null; then
+                    log_warning "Falling back to Flameshot"
+                    if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE"; then
+                        log_error "Failed to take screenshot with Flameshot"
+                        return 1
+                    fi
+                else
+                    log_error "Flameshot is not installed. Please install it or try again."
+                    return 1
+                fi
+            fi
+        fi
+        
+        # Double check and kill any remaining gnome-screenshot processes
+        pkill -f "gnome-screenshot.*$SCREENSHOT_FILE" 2>/dev/null || true
         play_sound "$SCREENSHOT_SOUND"
     else
-        flameshot gui -p "$SCREENSHOT_FILE"
+        if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE"; then
+            log_error "Failed to take screenshot with Flameshot"
+            return 1
+        fi
         play_sound "$SCREENSHOT_SOUND"
     fi
+    return 0
 }
 
 # Take a screenshot in Cinnamon environments
@@ -1141,7 +1170,32 @@ take_cinnamon_screenshot() {
     tool=$(get_screenshot_tool "cinnamon" "GNOME-Screenshot" "Flameshot")
 
     if [[ "$tool" == "GNOME-Screenshot" ]]; then
-        gnome-screenshot -a -f "$SCREENSHOT_FILE"
+        # Start gnome-screenshot in the background and get its PID
+        gnome-screenshot -a -f "$SCREENSHOT_FILE" & pid=$!
+        
+        # Wait for the screenshot to complete or timeout after 10 seconds
+        if ! wait "$pid" 2>/dev/null; then
+            # If wait fails, the process might still be running
+            if kill -0 "$pid" 2>/dev/null; then
+                log_warning "GNOME screenshot taking too long, terminating..."
+                kill -TERM "$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null
+                
+                # Fall back to Flameshot if available
+                if command -v flameshot &>/dev/null; then
+                    log_warning "Falling back to Flameshot"
+                    if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE"; then
+                        log_error "Failed to take screenshot with Flameshot"
+                        return 1
+                    fi
+                else
+                    log_error "Flameshot is not installed. Please install it or try again."
+                    return 1
+                fi
+            fi
+        fi
+        
+        # Double check and kill any remaining gnome-screenshot processes
+        pkill -f "gnome-screenshot.*$SCREENSHOT_FILE" 2>/dev/null || true
         play_sound "$SCREENSHOT_SOUND"
     else
         flameshot gui -p "$SCREENSHOT_FILE"
