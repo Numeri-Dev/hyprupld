@@ -10,7 +10,7 @@
 **A versatile screenshot and file upload utility for Linux and MacOS with multi-platform support**
 
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://github.com/Numeri-Dev/hyprupld/blob/main/LICENSE)
-[![Latest Release](https://img.shields.io/github/v/release/NumeriDev/hyprupld)](https://github.com/Numeri-Dev/hyprupld/releases)
+[![Latest Release](https://img.shields.io/github/v/release/Numeri-Dev/hyprupld)](https://github.com/Numeri-Dev/hyprupld/releases)
 
 </div>
 
@@ -36,7 +36,7 @@
 To install HyprUpld, execute the following one-line command in your terminal:
 ### Linux
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Numeri-Dev/hyprupld/main/install.sh)"
 ```
 ### Arch Linux PKGBUILD from AUR
 ```bash
@@ -44,11 +44,11 @@ yay -S hyprupld-git
 ```
 ### Arch Linux PKGBUILD from Github
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/PKGBUILD.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Numeri-Dev/hyprupld/main/PKGBUILD.sh)"
 ```
 ### MacOS
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/macos_install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Numeri-Dev/hyprupld/main/macos_install.sh)"
 ```
 
 > **Note:** If downloading manually from the [releases page](https://github.com/Numeri-Dev/hyprupld/releases), remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
@@ -261,7 +261,7 @@ To install:
 
 To remove HyprUpld and all its components from your system, run:
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/cleanup.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Numeri-Dev/hyprupld/main/cleanup.sh)"
 ```
 
 The cleanup script will:
