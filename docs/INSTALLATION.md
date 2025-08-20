@@ -57,12 +57,12 @@ Complete installation guide for HyprUpld across all supported platforms and dist
 
 #### Linux
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
 ```
 
 #### macOS
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install_macos.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install_macos.sh)"
 ```
 
 **What the one-line installer does:**
@@ -103,7 +103,7 @@ sudo zypper install hyprupld
 
 #### Step 1: Clone Repository
 ```bash
-git clone https://github.com/PhoenixAceVFX/hyprupld.git
+git clone https://github.com/Numeri-Dev/hyprupld.git
 cd hyprupld
 ```
 
@@ -149,13 +149,13 @@ bash install_scripts.sh
 ### Method 4: AppImage Installation
 
 #### Download AppImage
-1. Go to the [Releases page](https://github.com/PhoenixAceVFX/hyprupld/releases)
+1. Go to the [Releases page](https://github.com/Numeri-Dev/hyprupld/releases)
 2. Download the latest AppImage for your architecture
 3. Make it executable and run:
 
 ```bash
 # Download AppImage
-wget https://github.com/PhoenixAceVFX/hyprupld/releases/latest/download/hyprupld-x86_64.AppImage
+wget https://github.com/Numeri-Dev/hyprupld/releases/latest/download/hyprupld-x86_64.AppImage
 
 # Make executable
 chmod +x hyprupld-x86_64.AppImage
@@ -170,7 +170,7 @@ chmod +x hyprupld-x86_64.AppImage
 
 #### Automatic Installation
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
 ```
 
 #### Manual Installation
@@ -183,7 +183,7 @@ sudo apt install curl python3 zenity wl-clipboard flameshot \
   pulseaudio-utils sox alsa-utils mpg123 git
 
 # Clone and install
-git clone https://github.com/PhoenixAceVFX/hyprupld.git
+git clone https://github.com/Numeri-Dev/hyprupld.git
 cd hyprupld
 bash compile.sh
 bash install_scripts.sh
@@ -210,7 +210,7 @@ sudo pacman -S curl python3 zenity wl-clipboard flameshot \
   pulseaudio-utils sox alsa-utils mpg123 git
 
 # Clone and install
-git clone https://github.com/PhoenixAceVFX/hyprupld.git
+git clone https://github.com/Numeri-Dev/hyprupld.git
 cd hyprupld
 bash compile.sh
 bash install_scripts.sh
@@ -220,7 +220,7 @@ bash install_scripts.sh
 
 #### Automatic Installation
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
 ```
 
 #### Manual Installation
@@ -230,7 +230,7 @@ sudo dnf install curl python3 zenity wl-clipboard flameshot \
   pulseaudio-utils sox alsa-utils mpg123 git
 
 # Clone and install
-git clone https://github.com/PhoenixAceVFX/hyprupld.git
+git clone https://github.com/Numeri-Dev/hyprupld.git
 cd hyprupld
 bash compile.sh
 bash install_scripts.sh
@@ -253,7 +253,7 @@ brew install hyprupld
 brew install curl python3
 
 # Clone and install
-git clone https://github.com/PhoenixAceVFX/hyprupld.git
+git clone https://github.com/Numeri-Dev/hyprupld.git
 cd hyprupld
 bash compile.sh
 bash install_scripts.sh
@@ -469,7 +469,7 @@ sudo rm -rf /usr/local/share/hyprupld
 #### Using Cleanup Script
 ```bash
 # Download and run cleanup script
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/cleanup.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/cleanup.sh)"
 ```
 
 ## Updating
@@ -503,7 +503,7 @@ If you encounter installation issues:
 1. **Check the troubleshooting guide**: See [Troubleshooting Guide](TROUBLESHOOTING.md)
 2. **Enable debug mode**: Run `hyprupld -debug`
 3. **Check logs**: Review `~/.config/hyprupld/debug.log`
-4. **Create an issue**: Report problems on [GitHub Issues](https://github.com/PhoenixAceVFX/hyprupld/issues)
+4. **Create an issue**: Report problems on [GitHub Issues](https://github.com/Numeri-Dev/hyprupld/issues)
 
 ### System Requirements Check
 

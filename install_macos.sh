@@ -3,9 +3,9 @@
 # HyprUpld macOS Installation Script
 # This script clones and installs the HyprUpld application for macOS
 #==============================================================================
-# Author: PhoenixAceVFX
+# Author: Numeri
 # License: GPL-2.0
-# Repository: https://github.com/PhoenixAceVFX/hyprupld
+# Repository: https://github.com/Numeri-Dev/hyprupld
 #==============================================================================
 
 set -e  # Exit on any error
@@ -45,7 +45,7 @@ fi
 
 # Clone the repository
 echo -e "${GREEN}Cloning repository...${NC}"
-if ! git clone https://github.com/PhoenixAceVFX/hyprupld.git; then
+if ! git clone https://github.com/Numeri-Dev/hyprupld.git; then
     echo -e "${RED}Error: Failed to clone repository${NC}"
     exit 1
 fi

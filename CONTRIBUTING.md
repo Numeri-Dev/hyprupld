@@ -45,7 +45,7 @@ Go to the GitHub page of your fork and click **New Pull Request** to open a PR a
 
 ## 💡 Types of Contributions
 
-* 🐛 **Bug Reports** — Report bugs by [opening an issue](https://github.com/PhoenixAceVFX/hyprupld/issues) with detailed steps to reproduce.
+* 🐛 **Bug Reports** — Report bugs by [opening an issue](https://github.com/Numeri-Dev/hyprupld/issues) with detailed steps to reproduce.
 * ✨ **Feature Requests** — Suggest new features or improvements through an issue.
 * 📄 **Documentation** — Improve existing documentation or write new docs.
 * 💻 **Code Contributions** — Submit code improvements, bug fixes, or new features via Pull Request.

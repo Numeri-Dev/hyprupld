@@ -9,8 +9,8 @@
 
 **A versatile screenshot and file upload utility for Linux and MacOS with multi-platform support**
 
-[![License: GPL-2.0](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://github.com/PhoenixAceVFX/hyprupld/blob/main/LICENSE)
-[![Latest Release](https://img.shields.io/github/v/release/PhoenixAceVFX/hyprupld)](https://github.com/PhoenixAceVFX/hyprupld/releases)
+[![License: GPL-2.0](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://github.com/Numeri-Dev/hyprupld/blob/main/LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/NumeriDev/hyprupld)](https://github.com/Numeri-Dev/hyprupld/releases)
 
 </div>
 
@@ -36,7 +36,7 @@
 To install HyprUpld, execute the following one-line command in your terminal:
 ### Linux
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
 ```
 ### Arch Linux PKGBUILD from AUR
 ```bash
@@ -44,14 +44,14 @@ yay -S hyprupld-git
 ```
 ### Arch Linux PKGBUILD from Github
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/PKGBUILD.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/PKGBUILD.sh)"
 ```
 ### MacOS
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/macos_install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/macos_install.sh)"
 ```
 
-> **Note:** If downloading manually from the [releases page](https://github.com/PhoenixAceVFX/hyprupld/releases), remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
+> **Note:** If downloading manually from the [releases page](https://github.com/Numeri-Dev/hyprupld/releases), remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
 
 ---
 
@@ -219,8 +219,8 @@ For more information, visit the [official website](https://hyprupld.space).
 
 ## Resources
 
-- **GitHub Discussions**: Join the conversation, ask questions, and share ideas in our [Discussions](https://github.com/PhoenixAceVFX/hyprupld/discussions) section
-- **Issues**: Report bugs and request features in the [Issues](https://github.com/PhoenixAceVFX/hyprupld/issues) section
+- **GitHub Discussions**: Join the conversation, ask questions, and share ideas in our [Discussions](https://github.com/Numeri-Dev/hyprupld/discussions) section
+- **Issues**: Report bugs and request features in the [Issues](https://github.com/Numeri-Dev/hyprupld/issues) section
 - **Website**: Visit the [official website](https://hyprupld.space) for more information
 
 ---
@@ -261,7 +261,7 @@ To install:
 
 To remove HyprUpld and all its components from your system, run:
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/cleanup.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/cleanup.sh)"
 ```
 
 The cleanup script will:
@@ -338,12 +338,12 @@ A: Yes! HyprUpld automatically detects your display server (X11/Wayland) and use
 
 ## License
 
-This project is licensed under the [GPL-2.0 License](https://github.com/PhoenixAceVFX/hyprupld/blob/main/LICENSE).
+This project is licensed under the [GPL-2.0 License](https://github.com/Numeri-Dev/hyprupld/blob/main/LICENSE).
 
 ---
 
-*For any issues or contributions, please visit the [GitHub repository](https://github.com/PhoenixAceVFX/hyprupld).*
+*For any issues or contributions, please visit the [GitHub repository](https://github.com/Numeri-Dev/hyprupld).*
 
 --- 
 
-Created by PhoenixAceVFX
+Created by Numeri

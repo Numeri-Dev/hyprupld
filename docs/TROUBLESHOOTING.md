@@ -44,7 +44,7 @@ tail -f ~/.config/hyprupld/debug.log
 2. **Reinstall:**
    ```bash
    # Using the install script
-   bash -c "$(curl -fsSL https://raw.githubusercontent.com/PhoenixAceVFX/hyprupld/main/install.sh)"
+   bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
    ```
 
 3. **Check PATH:**
@@ -55,7 +55,7 @@ tail -f ~/.config/hyprupld/debug.log
 
 4. **Manual installation:**
    ```bash
-   git clone https://github.com/PhoenixAceVFX/hyprupld.git
+   git clone https://github.com/Numeri-Dev/hyprupld.git
    cd hyprupld
    bash compile.sh
    bash install_scripts.sh
@@ -592,8 +592,8 @@ grep -i guns ~/.config/hyprupld/debug.log
 
 ### Where to Get Help
 
-1. **GitHub Issues**: [Create an issue](https://github.com/PhoenixAceVFX/hyprupld/issues)
-2. **GitHub Discussions**: [Ask in discussions](https://github.com/PhoenixAceVFX/hyprupld/discussions)
+1. **GitHub Issues**: [Create an issue](https://github.com/Numeri-Dev/hyprupld/issues)
+2. **GitHub Discussions**: [Ask in discussions](https://github.com/Numeri-Dev/hyprupld/discussions)
 3. **Documentation**: Check this troubleshooting guide and other docs
 
 ### Information to Include

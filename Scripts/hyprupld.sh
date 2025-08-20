@@ -5,9 +5,9 @@
 # This script provides a flexible screenshot capture and upload solution
 # supporting multiple desktop environments and upload services.
 #==============================================================================
-# Author: PhoenixAceVFX
+# Author: Numeri
 # License: GPL-2.0
-# Repository: https://github.com/PhoenixAceVFX/hyprupld
+# Repository: https://github.com/Numeri-Dev/hyprupld
 #==============================================================================
 
 # Configuration paths for settings and package managers
@@ -136,7 +136,7 @@ readonly AUDIO_PLAYER_SETTING="preferred_audio_player"
 readonly VERSION="hyprupld-dev"
 
 # Add GitHub API URL and version pattern for updates
-readonly GITHUB_API_URL="https://api.github.com/repos/PhoenixAceVFX/hyprupld/releases/latest"
+readonly GITHUB_API_URL="https://api.github.com/repos/NumeriDev/hyprupld/releases/latest"
 readonly VERSION_PATTERN="^hyprupld-[0-9]{8}-[0-9]{6}$"
 
 # Sound file paths for feedback
@@ -961,7 +961,7 @@ Examples:
   hyprupld -xbackbone https://example.com token  # Use custom xBackBone instance
 
 For more information and updates, visit:
-https://github.com/PhoenixAceVFX/hyprupld
+https://github.com/Numeri-Dev/hyprupld
 EOF
 }
 
@@ -1741,7 +1741,7 @@ main() {
 handle_update() {
     if [[ ! -d "$HOME/hyprupld" ]]; then
         log_info "hyprupld source directory not found, cloning repository..."
-        if ! git clone https://github.com/PhoenixAceVFX/hyprupld.git "$HOME/hyprupld"; then
+        if ! git clone https://github.com/Numeri-Dev/hyprupld.git "$HOME/hyprupld"; then
             log_error "Failed to clone repository"
             exit 1
         fi

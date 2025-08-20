@@ -3,7 +3,7 @@
 # macOS .app Bundle Creation Script
 #==============================================================================
 # Description: Creates .app bundles from scripts in the Scripts directory
-# Author: PhoenixAceVFX
+# Author: Numeri
 # License: GPL-2.0
 #==============================================================================
 
@@ -144,7 +144,7 @@ for script in "$SCRIPTS_DIR"/*; do
     <key>CFBundleIconFile</key>
     <string>$APPNAME</string>
     <key>CFBundleIdentifier</key>
-    <string>com.phoenixacevfx.$APPNAME</string>
+    <string>com.Numeri.$APPNAME</string>
     <key>CFBundleName</key>
     <string>$APPNAME</string>
     <key>CFBundlePackageType</key>

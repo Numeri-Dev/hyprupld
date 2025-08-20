@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #==============================================================================
 # HyprUpld macOS Installation Script
-# Author: PhoenixAceVFX
+# Author: Numeri
 # License: GPL-2.0
 # Description: Installs HyprUpld and related tools to macOS system
 #==============================================================================
