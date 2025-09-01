@@ -743,15 +743,15 @@ handle_gui_installation_arch() {
 parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case $1 in
-        -debug)
+        -d | --debug)
             debug_enabled=true
             shift
             ;;
-        -strict)
+        -st | --strict)
             set -euox pipefail
             shift
             ;;
-        -reset)
+        -r | --reset)
             handle_reset
             exit 0
             ;;
@@ -759,23 +759,23 @@ parse_arguments() {
             display_help
             exit 0
             ;;
-        -s | --save)
+        -sa | --save)
             handle_save_option
             shift
             ;;
-        -update)
+        -u | --update)
             handle_update
             ;;
-        -mute)
+        -m | --mute)
             mute_enabled=true
             shift
             ;;
-        -silent)
+        -sl | --silent)
             silent_enabled=true
             mute_enabled=true
             shift
             ;;
-        -kill)
+        -k | --kill)
             log_info "Killing all running instances of hyprupld..."
             pkill -f hyprupld
             log_success "All running instances of hyprupld have been killed."
@@ -929,30 +929,30 @@ hyprupld - Screenshot and Upload Utility
 Usage: hyprupld [OPTIONS]
 
 Options:
-  -h, --help       Show this help message
-  -debug           Enable Verbose Debug Logs
-  -strict          Enable Strict Error Handling
-  -reset           Reset all settings and start fresh
-  -s, --save       Save screenshots to a specified directory
-  -update          Update hyprupld to the latest version
-  -mute            Mute sound feedback
-  -silent          Silent mode (no sound or notification)
-  -kill            Kill all running instances of hyprupld
-  -uwsm            Enable UWSM compatibility mode for Hyprland
+  -h  --help            Show this help message
+  -d  --debug           Enable Verbose Debug Logs
+  -st --strict          Enable Strict Error Handling
+  -r  --reset           Reset all settings and start fresh
+  -sa --save            Save screenshots to a specified directory
+  -u  --update          Update hyprupld to the latest version
+  -m  --mute            Mute sound feedback
+  -sl --silent          Silent mode (no sound or notification)
+  -k  --kill            Kill all running instances of hyprupld
+  -uwsm                 Enable UWSM compatibility mode for Hyprland
 
 Screenshot Services:
-  -guns            Use guns.lol
-  -ez              Use e-z.host
-  -fakecrime       Use fakecri.me
-  -nest            Use nest.rip
-  -pixelvault      Use pixelvault.co
-  -zipline         Use a custom Zipline instance
-  -xbackbone       Use a custom xBackBone instance
-  -imgur           Use imgur.com
+  -guns                 Use guns.lol
+  -ez                   Use e-z.host
+  -fakecrime            Use fakecri.me
+  -nest                 Use nest.rip
+  -pixelvault           Use pixelvault.co
+  -zipline              Use a custom Zipline instance
+  -xbackbone            Use a custom xBackBone instance
+  -imgur                Use imgur.com
 
 Environment Variables:
-  HYPRUPLD_CONFIG  Override default config directory
-  HYPRUPLD_DEBUG   Enable debug output when set to 1
+  HYPRUPLD_CONFIG       Override default config directory
+  HYPRUPLD_DEBUG        Enable debug output when set to 1
 
 Examples:
   hyprupld -guns              # Take screenshot and upload to guns.lol

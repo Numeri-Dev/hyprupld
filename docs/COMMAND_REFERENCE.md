@@ -12,15 +12,15 @@ hyprupld [OPTIONS] [SERVICE_OPTIONS]
 
 | Option | Description | Example |
 |--------|-------------|---------|
-| `-h, --help` | Display help information | `hyprupld -h` |
-| `-debug` | Enable verbose debug logging | `hyprupld -debug` |
-| `-strict` | Enable strict error handling | `hyprupld -strict` |
-| `-reset` | Reset all settings and start fresh | `hyprupld -reset` |
-| `-s, --save` | Save screenshots to a specified directory | `hyprupld -s` |
-| `-update` | Update hyprupld to the latest version | `hyprupld -update` |
-| `-mute` | Mute sound feedback | `hyprupld -mute` |
-| `-silent` | Silent mode (no sound or notification) | `hyprupld -silent` |
-| `-kill` | Kill all running instances of hyprupld | `hyprupld -kill` |
+| `-h --help` | Display help information | `hyprupld -h` |
+| `-d  --debug` | Enable verbose debug logging | `hyprupld -debug` |
+| `-st --strict` | Enable strict error handling | `hyprupld -strict` |
+| `-r --reset` | Reset all settings and start fresh | `hyprupld -reset` |
+| `-sa --save` | Save screenshots to a specified directory | `hyprupld -s` |
+| `-u --update` | Update hyprupld to the latest version | `hyprupld -update` |
+| `-m --mute` | Mute sound feedback | `hyprupld -mute` |
+| `-sl --silent` | Silent mode (no sound or notification) | `hyprupld -silent` |
+| `-k --kill` | Kill all running instances of hyprupld | `hyprupld -kill` |
 | `-uwsm` | Enable UWSM compatibility mode for Hyprland | `hyprupld -uwsm` |
 
 ## Upload Service Options
@@ -56,7 +56,7 @@ hyprupld -h
 hyprupld --help
 ```
 
-#### `-debug`
+#### `-d, --debug`
 Enables verbose debug logging. Useful for troubleshooting issues.
 
 ```bash
@@ -69,7 +69,7 @@ hyprupld -debug
 - Shows function names, line numbers, and timestamps
 - Displays environment information and system detection
 
-#### `-strict`
+#### `-st, --strict`
 Enables strict error handling mode. Useful for development and debugging.
 
 ```bash
@@ -82,7 +82,7 @@ hyprupld -strict
 - Shows command execution with `+` prefix
 - Useful for identifying exactly where errors occur
 
-#### `-reset`
+#### `-r, --reset`
 Resets all saved settings and configuration. Use with caution.
 
 ```bash
@@ -95,7 +95,7 @@ hyprupld -reset
 - Removes package manager cache
 - Forces re-detection of system components
 
-#### `-s, --save`
+#### `-sa, --save`
 Enables local screenshot saving with organized directory structure.
 
 ```bash
@@ -116,7 +116,7 @@ hyprupld -s
       └── hyprupld-20240203-104512.png
   ```
 
-#### `-update`
+#### `-u, --update`
 Updates HyprUpld to the latest version from the repository.
 
 ```bash
@@ -129,21 +129,21 @@ hyprupld -update
 - Runs compilation and installation scripts
 - Exits after successful update
 
-#### `-mute`
+#### `-m, --mute`
 Disables sound feedback while keeping notifications.
 
 ```bash
 hyprupld -mute
 ```
 
-#### `-silent`
+#### `-sl, --silent`
 Disables both sound feedback and notifications.
 
 ```bash
 hyprupld -silent
 ```
 
-#### `-kill`
+#### `-k, --kill`
 Terminates all running instances of HyprUpld.
 
 ```bash
