@@ -43,8 +43,7 @@ hyprupld -strict -debug
 
 #### System Information
 ```
-[DEBUG][2024-01-15 14:30:22.123][check_system_requirements:45] Detected macOS system
-[DEBUG][2024-01-15 14:30:22.124][check_system_requirements:46] macOS version: 14.2.1
+[DEBUG][2024-01-15 14:30:22.123][check_system_requirements:45] Detected Linux system
 [DEBUG][2024-01-15 14:30:22.125][detect_display_server:234] Display server: wayland
 [DEBUG][2024-01-15 14:30:22.126][detect_package_managers:267] Found package manager: pacman
 ```
@@ -144,9 +143,6 @@ find ~/.config/hyprupld/ -name "debug.log.*" -mtime +30 -delete
 ```bash
 # Check OS detection
 grep "Detected.*system" ~/.config/hyprupld/debug.log
-
-# Check macOS version detection
-grep "macOS version" ~/.config/hyprupld/debug.log
 
 # Check Linux distribution detection
 grep "Detected distribution" ~/.config/hyprupld/debug.log

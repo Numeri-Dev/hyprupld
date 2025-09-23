@@ -478,31 +478,6 @@ tail -f ~/.config/hyprupld/debug.log
    hyprupld -uwsm -debug
    ```
 
-### macOS Specific Issues
-
-#### Screenshot Capture Issues
-
-**Symptoms:**
-- screencapture fails
-- Permission denied errors
-
-**Solutions:**
-
-1. **Check screencapture:**
-   ```bash
-   which screencapture
-   screencapture -i /tmp/test.png
-   ```
-
-2. **Check permissions:**
-   - Go to System Preferences → Security & Privacy → Privacy
-   - Ensure terminal has screen recording permissions
-
-3. **Check macOS version:**
-   ```bash
-   sw_vers -productVersion
-   ```
-
 #### Clipboard Issues
 
 **Symptoms:**

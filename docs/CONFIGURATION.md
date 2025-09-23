@@ -247,7 +247,6 @@ HyprUpld includes three sound files for different actions:
 
 **Sound file locations:**
 - Linux: `/usr/local/share/hyprupld/sounds/`
-- macOS: `~/.local/share/hyprupld/sounds/`
 
 ## Upload Service Configuration
 

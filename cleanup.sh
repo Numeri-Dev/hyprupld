@@ -39,15 +39,6 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Function to detect OS
-detect_os() {
-    if [[ "$(uname)" == "Darwin" ]]; then
-        echo "macos"
-    else
-        echo "linux"
-    fi
-}
-
 # Function to remove files with confirmation
 remove_file() {
     local file="$1"
@@ -65,9 +56,6 @@ remove_file() {
 main() {
     print_status "Starting HyprUpld cleanup..."
     
-    # Detect OS
-    OS=$(detect_os)
-    
     # Kill any running hyprupld processes
     if pgrep -x "hyprupld" > /dev/null; then
         print_warning "Terminating running hyprupld processes..."
@@ -75,28 +63,10 @@ main() {
     fi
     
     # Remove binary files
-    if [ "$OS" = "macos" ]; then
-        # macOS specific cleanup
-        print_status "Removing macOS application bundles..."
-        remove_file "/Applications/hyprupld.app"
-        remove_file "$HOME/Applications/hyprupld.app"
-        
-        # Remove command line symlink
-        if [ -L "/usr/local/bin/hyprupld" ]; then
-            remove_file "/usr/local/bin/hyprupld"
-        fi
-        if [ -L "$HOME/bin/hyprupld" ]; then
-            remove_file "$HOME/bin/hyprupld"
-        fi
-        
-        # Remove sound files
-        remove_file "$HOME/Library/Application Support/HyprUpld"
-    else
         # Linux specific cleanup
         print_status "Removing Linux binaries..."
         remove_file "/usr/local/bin/hyprupld"
         remove_file "/usr/local/share/hyprupld"
-    fi
     
     # Ask about config directory
     if [ -d "$HOME/.config/hyprupld" ]; then
@@ -147,11 +117,7 @@ main() {
 
     # Remove sound files
     print_status "Checking for sound files..."
-    if [ "$OS" = "macos" ]; then
-        SOUNDS_DIR="$HOME/Library/Application Support/HyprUpld/sounds"
-    else
-        SOUNDS_DIR="/usr/local/share/hyprupld/sounds"
-    fi
+    SOUNDS_DIR="/usr/local/share/hyprupld/sounds"
 
     if [ -d "$SOUNDS_DIR" ]; then
         read -p "Do you want to remove the sound files at $SOUNDS_DIR? (y/n) " -n 1 -r

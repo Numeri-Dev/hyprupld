@@ -352,5 +352,5 @@ hyprupld -kill
 - **Authentication**: API keys are stored securely in `~/.config/hyprupld/settings.json`
 - **Configuration**: Settings persist between runs and can be reset with `-reset`
 - **Logging**: Debug logs are written to `~/.config/hyprupld/debug.log`
-- **Compatibility**: Options work across all supported platforms (Linux, macOS)
+- **Compatibility**: Options work across all supported platforms (Linux)
 - **Order**: Option order generally doesn't matter, but service options should come after general options 

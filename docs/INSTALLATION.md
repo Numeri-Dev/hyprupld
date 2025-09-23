@@ -7,7 +7,6 @@ Complete installation guide for HyprUpld across all supported platforms and dist
 ### System Requirements
 
 - **Linux**: Any modern distribution (Arch, Debian, Fedora, Ubuntu, etc.)
-- **macOS**: 10.0 or later
 - **RAM**: 512MB minimum, 1GB recommended
 - **Storage**: 50MB free space
 - **Network**: Internet connection for upload services
@@ -39,18 +38,6 @@ Complete installation guide for HyprUpld across all supported platforms and dist
 - `wl-clipboard` - For Wayland
 - `xclip` - For X11
 
-#### macOS Dependencies
-
-**Core Dependencies:**
-- `curl` - HTTP client
-- `python3` - JSON processing
-- `Homebrew` - Package manager (recommended)
-
-**Built-in Tools:**
-- `screencapture` - Screenshot tool
-- `pbcopy`/`pbpaste` - Clipboard utilities
-- `osascript` - Notifications and automation
-
 ## Installation Methods
 
 ### Method 1: One-Line Install (Recommended)
@@ -58,11 +45,6 @@ Complete installation guide for HyprUpld across all supported platforms and dist
 #### Linux
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
-```
-
-#### macOS
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install_macos.sh)"
 ```
 
 **What the one-line installer does:**
@@ -127,11 +109,6 @@ sudo pacman -S curl python3 zenity wl-clipboard flameshot \
 sudo dnf install curl python3 zenity wl-clipboard flameshot \
   pulseaudio-utils sox alsa-utils mpg123 git
 ```
-
-**macOS:**
-```bash
-# Install Homebrew if not already installed
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install dependencies
 brew install curl python3
@@ -234,17 +211,6 @@ git clone https://github.com/Numeri-Dev/hyprupld.git
 cd hyprupld
 bash compile.sh
 bash install_scripts.sh
-```
-
-### macOS Installation
-
-#### Using Homebrew (Recommended)
-```bash
-# Install Homebrew if not already installed
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install HyprUpld
-brew install hyprupld
 ```
 
 #### Manual Installation
@@ -450,10 +416,6 @@ sudo apt remove hyprupld
 # Fedora
 sudo dnf remove hyprupld
 
-# macOS
-brew uninstall hyprupld
-```
-
 #### Manual Removal
 ```bash
 # Remove binary
@@ -491,7 +453,6 @@ bash install_scripts.sh
 sudo pacman -Syu hyprupld  # Arch Linux
 sudo apt update && sudo apt upgrade hyprupld  # Ubuntu/Debian
 sudo dnf update hyprupld  # Fedora
-brew upgrade hyprupld  # macOS
 ```
 
 ## Support
@@ -511,11 +472,9 @@ If you encounter installation issues:
 # Check system information
 uname -a
 lsb_release -a  # Linux
-sw_vers  # macOS
 
 # Check available memory
 free -h  # Linux
-vm_stat  # macOS
 
 # Check disk space
 df -h

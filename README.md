@@ -7,7 +7,7 @@
 ![Neovim](https://img.shields.io/badge/NeoVim-%2357A143.svg?&style=for-the-badge&logo=neovim&logoColor=white)
 [![Discord](https://img.shields.io/discord/1253122047354077258?color=5865F2&label=discord&logo=discord&logoColor=white&style=for-the-badge)](https://discord.gg/PPTyhTAb6r)
 
-**A versatile screenshot and file upload utility for Linux and MacOS with multi-platform support**
+**A versatile screenshot and file upload utility for Linux with multi-platform support**
 
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://github.com/Numeri-Dev/hyprupld/blob/main/LICENSE)
 [![Latest Release](https://img.shields.io/github/v/release/Numeri-Dev/hyprupld)](https://github.com/Numeri-Dev/hyprupld/releases)
@@ -45,10 +45,6 @@ yay -S hyprupld-git
 ### Arch Linux PKGBUILD from Github
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Numeri-Dev/hyprupld/main/PKGBUILD.sh)"
-```
-### MacOS
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/Numeri-Dev/hyprupld/main/macos_install.sh)"
 ```
 
 > **Note:** If downloading manually from the [releases page](https://github.com/Numeri-Dev/hyprupld/releases), remember to make the script executable with `chmod +x` before creating keybindings. This step is not needed when using the one-line installer.
@@ -173,9 +169,6 @@ Use `-reset` to clear all saved settings and start fresh.
 
 ### Operating Systems
 - Linux (Primary support)
-- macOS (Experimental)
-  - Built-in screencapture tool
-  - Third-party tools: CleanShot X, Xsnapper
 
 ### Desktop Environments
 HyprUpld works seamlessly with various Linux desktop environments:
@@ -211,7 +204,7 @@ Installation is supported on systems using:
 
 ## About
 
-HyprUpld is an all-in-one screenshot tool designed to streamline the process of capturing and uploading screenshots across Linux and macOS (experimental) platforms.
+HyprUpld is an all-in-one screenshot tool designed to streamline the process of capturing and uploading screenshots across Linux platforms.
 
 For more information, visit the [official website](https://hyprupld.space).
 
@@ -282,8 +275,6 @@ The script is interactive and will ask for confirmation before removing each com
 * [fyi](https://github.com/Macchina-CLI/fyi) - Minimal desktop notifications
 * [zenity](https://gitlab.gnome.org/GNOME/zenity) - Display graphical dialog boxes from shell scripts
 * [python](https://github.com/python) - Replacing JQ as a JSON Processor
-* [sips](https://developer.apple.com/documentation/sips) - Command line tool for macOS
-* [osascript](https://developer.apple.com/documentation/appscript) - Command line tool for macOS
 * [zip](https://github.com/infozip/zip) - Command line tool for creating zip archives
 
 ### Screenshot Tools
@@ -296,9 +287,6 @@ The script is interactive and will ask for confirmation before removing each com
 * [deepin-screenshot](https://github.com/linuxdeepin/deepin-screenshot) - For Deepin
 * [mate-screenshot](https://github.com/mate-desktop/mate-utils) - For MATE
 * [grim](https://github.com/emersion/grim) - For Sway
-* [screencapture](https://developer.apple.com/documentation/appkit/screencapture) - For macOS
-* [cleanshot](https://cleanshot.com) - For macOS
-* [xsnapper](https://xsnapper.com) - For macOS
 
 ## Issues and Support
 Please use the [Issues](../../issues) section to:

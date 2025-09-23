@@ -30,7 +30,6 @@ hyprupld/
 │   ├── DEVELOPMENT.md      # This file
 │   └── API_REFERENCE.md    # API reference
 ├── install.sh              # Installation script
-├── install_macos.sh        # macOS installation script
 ├── compile.sh              # Compilation script
 ├── install_scripts.sh      # Script installation
 ├── cleanup.sh              # Cleanup script
@@ -55,7 +54,6 @@ hyprupld/
 
 #### Configuration Files
 - `install.sh` - Linux installation script
-- `install_macos.sh` - macOS installation script
 - `compile.sh` - Build and compilation script
 - `PKGBUILD` - Arch Linux package definition
 
@@ -106,11 +104,6 @@ sudo pacman -S shellcheck python3 curl zenity
 **Fedora:**
 ```bash
 sudo dnf install ShellCheck python3 curl zenity
-```
-
-**macOS:**
-```bash
-brew install shellcheck python3 curl
 ```
 
 #### 3. Set Up Testing Environment
@@ -266,14 +259,6 @@ XDG_CURRENT_DESKTOP=hyprland hyprupld-dev -debug
 # Test on different display servers
 WAYLAND_DISPLAY=wayland-0 hyprupld-dev -debug
 DISPLAY=:0 hyprupld-dev -debug
-```
-
-**macOS Testing:**
-```bash
-# Test macOS functionality
-hyprupld-dev -debug
-hyprupld-dev -imgur
-hyprupld-dev -s
 ```
 
 #### Error Condition Tests

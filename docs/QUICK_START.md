@@ -11,9 +11,6 @@ Before installing HyprUpld, ensure you have:
 - Basic command-line tools (curl, python3)
 - A desktop environment (GNOME, KDE, Hyprland, etc.)
 
-### macOS
-- macOS 10.0 or later
-- Homebrew (recommended for easy installation)
 
 ## Installation
 
@@ -22,10 +19,6 @@ Before installing HyprUpld, ensure you have:
 ```bash
 # Linux
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
-
-# macOS
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install_macos.sh)"
-```
 
 ### Alternative: Package Manager (Arch Linux)
 

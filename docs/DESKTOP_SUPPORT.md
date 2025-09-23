@@ -482,18 +482,6 @@ xclip -selection clipboard -t image/png -o > image.png
 xclip -selection clipboard -t TARGETS -o
 ```
 
-### macOS Clipboard
-
-**Tools:** `pbcopy`/`pbpaste`
-**Commands:**
-```bash
-# Copy to clipboard
-osascript -e 'set the clipboard to (read (POSIX file "image.png") as PNG picture)'
-
-# Paste from clipboard
-osascript -e 'the clipboard' > image.png
-```
-
 ## Audio Integration
 
 ### Audio Player Detection

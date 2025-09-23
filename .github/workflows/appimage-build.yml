@@ -8,8 +8,6 @@ on:
       - 'HyprUpld.png'
       - 'compile.sh'
       - 'install_scripts.sh'
-      - 'compile_macos.sh'
-      - 'install_scripts_macos.sh'
 
 permissions:
   contents: write

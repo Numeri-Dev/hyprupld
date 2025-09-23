@@ -192,15 +192,6 @@ fi
 take_wayland_screenshot
 ```
 
-#### `take_macos_screenshot()`
-**Purpose**: Take screenshot on macOS
-**Parameters**: None
-**Returns**: 0 on success, 1 on failure
-**Example**:
-```bash
-take_macos_screenshot
-```
-
 #### `verify_screenshot()`
 **Purpose**: Verify that screenshot file exists and is not empty
 **Parameters**: None

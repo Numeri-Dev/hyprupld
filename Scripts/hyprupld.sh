@@ -33,11 +33,6 @@ silent_enabled=false
 save_enabled=false
 debug_enabled=false
 
-# Set strict mode based on OS
-if [[ "$(uname)" != "Darwin" ]]; then
-    # Enable strict mode only on non-MacOS systems
-    set -o nounset
-fi
 # Always enable pipefail for better error handling
 set -o pipefail
 
@@ -50,43 +45,6 @@ readonly COLOR_MAGENTA='\033[0;35m'
 readonly COLOR_CYAN='\033[0;36m'
 readonly COLOR_GRAY='\033[0;37m'
 readonly COLOR_RESET='\033[0m'
-
-# Set up bash environment
-if [[ "$(uname)" == "Darwin" ]]; then
-    # macOS specific settings
-    export BASH_SILENCE_DEPRECATION_WARNING=1
-    shopt -s expand_aliases 2>/dev/null || true
-
-    # Provide readlink -f functionality for macOS
-    if ! command -v readlink >/dev/null 2>&1 || ! readlink -f . >/dev/null 2>&1; then
-        readlink() {
-            local target_file=$1
-            local cd_back=$(pwd)
-
-            if [[ -d "$target_file" ]]; then
-                cd "$target_file"
-                target_file="."
-            else
-                cd "$(dirname "$target_file")"
-                target_file=$(basename "$target_file")
-            fi
-
-            # Iterate down a (possible) chain of symlinks
-            while [ -L "$target_file" ]; do
-                target_file=$(readlink "$target_file")
-                cd "$(dirname "$target_file")"
-                target_file=$(basename "$target_file")
-            done
-
-            # Compute the canonicalized name by finding the physical path
-            # for the directory we're in and appending the target file.
-            local phys_dir=$(pwd -P)
-            local result="$phys_dir/$target_file"
-            cd "$cd_back"
-            echo "$result"
-        }
-    fi
-fi
 
 # Service configurations for different upload services
 # Use a more compatible way to define service configurations
@@ -140,12 +98,7 @@ readonly GITHUB_API_URL="https://api.github.com/repos/NumeriDev/hyprupld/release
 readonly VERSION_PATTERN="^hyprupld-[0-9]{8}-[0-9]{6}$"
 
 # Sound file paths for feedback
-if [[ "$(uname)" == "Darwin" ]]; then
-    # For macOS, use user's local directory
-    readonly SOUND_DIR="${HOME}/.local/share/hyprupld/sounds"
-else
-    readonly SOUND_DIR="/usr/local/share/hyprupld/sounds"
-fi
+readonly SOUND_DIR="/usr/local/share/hyprupld/sounds"
 readonly SCREENSHOT_SOUND="${SOUND_DIR}/sstaken.mp3"
 readonly CLIPBOARD_SOUND="${SOUND_DIR}/clipboard.mp3"
 readonly LINK_SOUND="${SOUND_DIR}/link.mp3"
@@ -335,29 +288,10 @@ check_system_requirements() {
     # Check for unsupported operating systems
     if [[ "$(uname)" == "Darwin" ]]; then
         os_type="macos"
-        log_info "Detected macOS system"
-
-        # Check macOS version
-        local macos_version
-        macos_version=$(sw_vers -productVersion)
-        if [[ $(echo "$macos_version" | cut -d. -f1) -lt 10 ]]; then
-            log_error "Unsupported macOS version: $macos_version. Minimum required is 10.0"
-            exit 1
-        fi
-
-        # Check for required macOS tools
-        for tool in screencapture pbcopy pbpaste osascript; do
-            if ! command -v "$tool" >/dev/null 2>&1; then
-                log_error "Critical macOS system tool not found: $tool"
-                log_error "This tool is a built-in macOS utility and should be pre-installed."
-                log_error "If this tool is missing, your macOS installation may be damaged."
-                log_error "Please contact Apple Support or reinstall macOS to resolve this issue."
-                exit 1
-            fi
-        done
-
+        log_error="MacOS Support is no longer supported due to being unmaintainable and unused"
+        exit 1
     elif grep -qi microsoft /proc/version 2>/dev/null; then
-        log_error "Windows WSL is not supported, HyprUpld is only compatible with Linux and MacOS"
+        log_error "Windows WSL is not supported, HyprUpld is only compatible with Linux"
         exit 1
     else
         os_type="linux"
@@ -367,7 +301,7 @@ check_system_requirements() {
 
 check_basic_dependencies() {
     log_step "Checking basic dependencies"
-    # These are dependencies required by both macOS and Linux
+    # These are dependencies required by Linux
     local basic_deps=("curl" "python3")
     local missing=()
 
@@ -549,21 +483,6 @@ detect_display_server() {
 detect_package_managers() {
     log_step "Detecting package managers..."
 
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # On macOS, we only need to check for Homebrew
-        if command -v brew >/dev/null 2>&1; then
-            log_info "Found package manager: brew (Homebrew)"
-            echo '["macos"]' >"$PCKMGRS_FILE"
-            log_success "Detected package manager: Homebrew"
-            echo "macos"
-            return 0
-        else
-            log_warning "Homebrew not found. Visit https://brew.sh to install it"
-            echo '[]' >"$PCKMGRS_FILE"
-            return 0
-        fi
-    fi
-
     # For Linux systems, check all possible package managers
     local managers="pacman apt-get dnf nix-env emerge zypper xbps-install yay paru"
     local detected_managers=""
@@ -612,23 +531,6 @@ install_missing_packages() {
     if ! [ -t 0 ]; then
         handle_gui_installation "${missing_packages[@]}"
         return
-    fi
-
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # On macOS, only try to use Homebrew
-        if command -v brew >/dev/null 2>&1; then
-            log_step "Installing packages with Homebrew..."
-            if brew install "${missing_packages[@]}"; then
-                log_success "Successfully installed packages with Homebrew"
-                return 0
-            else
-                log_error "Failed to install packages with Homebrew"
-                return 1
-            fi
-        else
-            log_error "Homebrew not found. Please install Homebrew from https://brew.sh"
-            return 1
-        fi
     fi
 
     # For Linux systems, proceed with package manager detection and installation
@@ -967,12 +869,9 @@ EOF
 
 # Take a screenshot based on the desktop environment
 take_screenshot() {
-    if [[ "$os_type" == "macos" ]]; then
-        take_macos_screenshot
-    else
-        log_step "Taking screenshot based on desktop environment: $desktop_env"
+    log_step "Taking screenshot based on desktop environment: $desktop_env"
 
-        case "$desktop_env" in
+    case "$desktop_env" in
         *"sway"* | *"hyprland"* | *"i3"*)
             take_wayland_screenshot
             ;;
@@ -1002,7 +901,6 @@ take_screenshot() {
             return 1
             ;;
         esac
-    fi
 
     verify_screenshot
 }
@@ -1207,17 +1105,6 @@ take_cinnamon_screenshot() {
 take_deepin_screenshot() {
     deepin-screenshot -s "$SCREENSHOT_FILE"
     play_sound "$SCREENSHOT_SOUND"
-}
-
-# Take a screenshot in macOS
-take_macos_screenshot() {
-    log_info "Taking screenshot on macOS using screencapture"
-    if ! screencapture -i "$SCREENSHOT_FILE"; then
-        log_error "Failed to take screenshot with screencapture"
-        return 1
-    fi
-    play_sound "$SCREENSHOT_SOUND"
-    return 0
 }
 
 # Take a screenshot in MATE environments
@@ -1472,21 +1359,6 @@ process_upload_response() {
 # Copy the screenshot to the clipboard
 copy_to_clipboard() {
     log_step "Copying screenshot to clipboard"
-
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # Use macOS native clipboard with error handling
-        if ! osascript -e 'set the clipboard to (read (POSIX file "'"$SCREENSHOT_FILE"'") as JPEG picture)' 2>/dev/null; then
-            log_warning "Failed to copy as JPEG, trying PNG format..."
-            if ! osascript -e 'set the clipboard to (read (POSIX file "'"$SCREENSHOT_FILE"'") as PNG picture)' 2>/dev/null; then
-                log_error "Failed to copy screenshot to clipboard"
-                return 1
-            fi
-        fi
-        # Get image info using sips
-        local image_info
-        image_info=$(sips -g pixelWidth -g pixelHeight "$SCREENSHOT_FILE" 2>/dev/null | tail -n2 | tr '\n' ' ' || echo "Image info not available")
-        log_info "Direct image copied to clipboard. $image_info"
-    else
         local display_server
         display_server=$(detect_display_server)
 
@@ -1528,7 +1400,6 @@ copy_to_clipboard() {
             return 1
             ;;
         esac
-    fi
 
     log_success "Screenshot copied to clipboard"
     fyi_call "HyprUpld" "Screenshot copied to clipboard"
@@ -1539,13 +1410,6 @@ copy_to_clipboard() {
 # Copy a URL to the clipboard
 copy_url_to_clipboard() {
     local url="$1"
-
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # Use macOS native clipboard
-        echo -n "$url" | pbcopy
-        clipboard_content=$(pbpaste)
-        log_info "Using pbcopy/pbpaste for macOS clipboard operations"
-    else
         local display_server
         display_server=$(detect_display_server)
 
@@ -1575,7 +1439,6 @@ copy_url_to_clipboard() {
             return 1
             ;;
         esac
-    fi
 
     log_info "URL copied to clipboard: $clipboard_content"
     fyi_call "HyprUpld" "Image URL copied to clipboard: $clipboard_content"
@@ -1614,18 +1477,11 @@ initialize_script() {
 
     # Then check basic dependencies common to both OS's
     check_basic_dependencies
-
-    # Set up environment based on OS
-    if [[ "$os_type" == "macos" ]]; then
-        distro="macOS $(sw_vers -productVersion)"
-        desktop_env="aqua"
-    else
-        # Detect distribution and desktop environment
-        distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
-        desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
-        # Check display server for Linux only
-        detect_display_server
-    fi
+    # Detect distribution and desktop environment
+    distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
+    desktop_env=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
+    # Check display server for Linux only
+    detect_display_server
 
     log_info "Detected distribution: $distro"
     log_info "Detected desktop environment: $desktop_env"
@@ -1831,12 +1687,8 @@ play_sound() {
         return 1
     fi
 
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # Use macOS native audio player
-        afplay "$sound_file" &>/dev/null
-    else
-        # Get preferred audio player from settings
-        local preferred_player
+    # Get preferred audio player from settings
+    local preferred_player
         preferred_player=$(get_saved_value "$AUDIO_PLAYER_SETTING")
 
         if [[ -n "$preferred_player" ]] && command -v "$preferred_player" &>/dev/null; then
@@ -1859,7 +1711,6 @@ play_sound() {
             mute_enabled=true
             return 1
         fi
-    fi
 }
 
 # Call the notification function based on OS
@@ -1871,13 +1722,8 @@ fyi_call() {
     local title="$1"
     local message="$2"
 
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # Use osascript for macOS notifications
-        osascript -e "display notification \"$message\" with title \"$title\""
-    else
-        # Use fyi for Linux notifications
-        fyi "$title" "$message"
-    fi
+    # Use fyi for Linux notifications
+    fyi "$title" "$message"
 }
 
 # Ensure sound files exist in the specified directory
