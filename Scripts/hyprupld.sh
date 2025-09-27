@@ -1025,41 +1025,52 @@ take_gnome_screenshot() {
     tool=$(get_screenshot_tool "gnome" "GNOME-Screenshot" "Flameshot")
 
     if [[ "$tool" == "GNOME-Screenshot" ]]; then
-        # Start gnome-screenshot in the background and get its PID
-        gnome-screenshot -a -f "$SCREENSHOT_FILE" & pid=$!
-        
-        # Wait for the screenshot to complete or timeout after 10 seconds
-        if ! wait "$pid" 2>/dev/null; then
-            # If wait fails, the process might still be running
-            if kill -0 "$pid" 2>/dev/null; then
-                log_warning "GNOME screenshot taking too long, terminating..."
-                kill -TERM "$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null
+        # First check if gnome-screenshot is actually available
+        if ! command -v gnome-screenshot &>/dev/null; then
+            log_warning "gnome-screenshot not found, falling back to Flameshot"
+            tool="Flameshot"
+        else
+            # Try to take screenshot with GNOME
+            if ! gnome-screenshot -a -f "$SCREENSHOT_FILE" 2>/tmp/gnome-screenshot-error; then
+                local gnome_error=$(</tmp/gnome-screenshot-error)
+                rm -f /tmp/gnome-screenshot-error
                 
-                # Fall back to Flameshot if available
-                if command -v flameshot &>/dev/null; then
+                # Check for specific error about GNOME Shell integration
+                if [[ "$gnome_error" == *"unable to use GNOME Shell's builtin screenshot interface"* ]] || 
+                   [[ "$gnome_error" == *"SelectArea is not allowed"* ]]; then
+                    log_warning "GNOME Shell integration failed: $gnome_error"
                     log_warning "Falling back to Flameshot"
-                    if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE"; then
-                        log_error "Failed to take screenshot with Flameshot"
-                        return 1
-                    fi
+                    tool="Flameshot"
                 else
-                    log_error "Flameshot is not installed. Please install it or try again."
+                    log_error "GNOME screenshot failed: $gnome_error"
                     return 1
                 fi
+            else
+                # Successfully took screenshot with GNOME
+                play_sound "$SCREENSHOT_SOUND"
+                return 0
             fi
         fi
-        
-        # Double check and kill any remaining gnome-screenshot processes
-        pkill -f "gnome-screenshot.*$SCREENSHOT_FILE" 2>/dev/null || true
-        play_sound "$SCREENSHOT_SOUND"
-    else
-        if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE"; then
-            log_error "Failed to take screenshot with Flameshot"
+    fi
+    
+    # If we get here, either Flameshot was selected or GNOME failed
+    if [[ "$tool" == "Flameshot" ]]; then
+        if command -v flameshot &>/dev/null; then
+            if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE"; then
+                log_error "Failed to take screenshot with Flameshot"
+                return 1
+            fi
+            play_sound "$SCREENSHOT_SOUND"
+            return 0
+        else
+            log_error "Flameshot is not installed. Please install it or try again."
             return 1
         fi
-        play_sound "$SCREENSHOT_SOUND"
     fi
-    return 0
+    
+    # If we get here, something went wrong
+    log_error "No valid screenshot tool could be used"
+    return 1
 }
 
 # Take a screenshot in Cinnamon environments
