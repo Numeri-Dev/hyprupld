@@ -434,7 +434,6 @@ case "$service" in
     "pixelvault_auth": "your_auth_token",
     "hyprland_tool": "hyprshot",
     "kde_tool": "spectacle",
-    "gnome_tool": "gnome-screenshot"
 }
 ```
 

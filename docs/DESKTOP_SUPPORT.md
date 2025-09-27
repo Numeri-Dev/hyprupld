@@ -1,3 +1,7 @@
+# ⚠️ **GNOME is no longer supported**
+
+Due to recent changes in GNOME, region screenshotting is no longer possible in hyprupld. Please use another desktop environment or take screenshots manually. For updates, see: https://github.com/Numeri-Dev/hyprupld
+
 # Desktop Environment Support
 
 Comprehensive guide to desktop environment detection, tool selection, and optimization in HyprUpld.
@@ -140,53 +144,13 @@ flameshot gui --raw > /tmp/screenshot.png
 - Region selection with KDE styling
 - Multiple output formats
 
-#### GNOME (Wayland)
-
-**Detection:**
-- `$XDG_CURRENT_DESKTOP` contains "GNOME"
-- `$WAYLAND_DISPLAY` is set
-
-**Primary Tool:** `grim` + `slurp`
-**Fallback Tool:** `grimblast`
-
-**Configuration:**
-```bash
-# grim + slurp configuration
-grim -g "$(slurp)" /tmp/screenshot.png
-
-# grimblast fallback
 grimblast save area /tmp/screenshot.png
-```
 
-**Features:**
-- Native Wayland support
-- Region selection with GNOME styling
-- Integration with GNOME Shell
 
 ### X11 Environments
 
-#### GNOME (X11)
-
-**Detection:**
-- `$XDG_CURRENT_DESKTOP` contains "GNOME"
-- `$DISPLAY` is set
-
-**Primary Tool:** `gnome-screenshot`
-**Fallback Tool:** `flameshot`
-
-**Configuration:**
-```bash
-# gnome-screenshot configuration
 gnome-screenshot -a -f /tmp/screenshot.png
 
-# flameshot fallback
-flameshot gui -p /tmp/screenshot.png
-```
-
-**Features:**
-- Native GNOME integration
-- GNOME Shell notifications
-- Automatic clipboard integration
 
 #### KDE Plasma (X11)
 

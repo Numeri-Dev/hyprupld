@@ -889,7 +889,16 @@ take_screenshot() {
             take_xfce_screenshot
             ;;
         *"gnome"*)
-            take_gnome_screenshot
+            log_error "GNOME screenshotting is no longer supported. GNOME's recent changes have made region screenshotting impossible to support in hyprupld."
+            log_error "Please use another desktop environment or take screenshots manually."
+            if command -v zenity &>/dev/null; then
+                zenity --error --width=500 --title="GNOME Not Supported" \
+                    --text="<big><b>GNOME Screenshotting Not Supported</b></big>\n\n""\
+Due to recent changes in GNOME, region screenshotting is no longer possible in hyprupld.\n\n""\
+Please use another desktop environment or take screenshots manually.\n\n""\
+See: https://github.com/Numeri-Dev/hyprupld for updates."
+            fi
+            return 1
             ;;
         *"cinnamon"*)
             take_cinnamon_screenshot
@@ -1023,51 +1032,6 @@ take_xfce_screenshot() {
     else
         flameshot gui -p "$SCREENSHOT_FILE"
         play_sound "$SCREENSHOT_SOUND"
-    fi
-}
-
-# Take a screenshot in GNOME environments
-take_gnome_screenshot() {
-    # Use screenshot-tool (xdg-desktop-portal) for region screenshots if available
-    if command -v screenshot-tool &>/dev/null; then
-        log_info "Taking region screenshot with screenshot-tool (xdg-desktop-portal)..."
-        rm -f "$SCREENSHOT_FILE"
-        if screenshot-tool --area "$SCREENSHOT_FILE"; then
-            if [[ -f "$SCREENSHOT_FILE" && -s "$SCREENSHOT_FILE" ]]; then
-                log_success "Successfully took region screenshot with screenshot-tool"
-                play_sound "$SCREENSHOT_SOUND"
-                return 0
-            else
-                log_error "screenshot-tool completed but no screenshot was captured (user cancellation?)"
-                return 1
-            fi
-        else
-            log_error "screenshot-tool failed to take a screenshot."
-            return 1
-        fi
-    else
-        log_warning "screenshot-tool (xdg-desktop-portal) is not available."
-        # Fallback: prompt user to take a screenshot manually and select the file
-        if command -v zenity &>/dev/null; then
-            zenity --info --width=500 --title="Manual Screenshot Required" \
-                --text="<big><b>Manual Screenshot Required</b></big>\n\n""\
-GNOME/Wayland does not support automated region screenshots without xdg-desktop-portal.\n\n""\
-Please use the built-in screenshot tool (Shift+PrintScreen), save the file, and select it in the next dialog."
-            local selected_file
-            selected_file=$(zenity --file-selection --title="Select Screenshot File" --file-filter="*.png *.jpg *.jpeg")
-            if [[ -n "$selected_file" && -f "$selected_file" ]]; then
-                cp "$selected_file" "$SCREENSHOT_FILE"
-                log_success "Screenshot file selected: $selected_file"
-                play_sound "$SCREENSHOT_SOUND"
-                return 0
-            else
-                log_error "No screenshot file selected."
-                return 1
-            fi
-        else
-            log_error "No supported screenshot method available for GNOME/Wayland. Please install screenshot-tool or use the built-in screenshot tool."
-            return 1
-        fi
     fi
 }
 

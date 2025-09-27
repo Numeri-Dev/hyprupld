@@ -170,12 +170,14 @@ Use `-reset` to clear all saved settings and start fresh.
 ### Operating Systems
 - Linux (Primary support)
 
+
 ### Desktop Environments
-HyprUpld works seamlessly with various Linux desktop environments:
+**Note:** ⚠️ **GNOME is no longer supported.** Due to upstream changes, region screenshotting is not possible in hyprupld on GNOME. Please use another desktop environment.
+
+HyprUpld works seamlessly with the following Linux desktop environments:
 
 - KDE Plasma
 - Hyprland
-- GNOME
 - XFCE
 - i3
 - Deepin
@@ -281,7 +283,6 @@ The script is interactive and will ask for confirmation before removing each com
 * [grimblast](https://github.com/hyprwm/contrib) - For Sway and i3
 * [hyprshot](https://github.com/your-repo/hyprshot) - For Hyprland
 * [spectacle](https://github.com/KDE/spectacle) - For KDE Plasma
-* [gnome-screenshot](https://gitlab.gnome.org/GNOME/gnome-screenshot) - For GNOME
 * [xfce4-screenshooter](https://docs.xfce.org/apps/xfce4-screenshooter/start) - For XFCE
 * [scrot](https://github.com/resurrecting-open-source-projects/scrot) - For i3, Openbox, and other minimal WMs
 * [deepin-screenshot](https://github.com/linuxdeepin/deepin-screenshot) - For Deepin

@@ -29,7 +29,6 @@ The settings file contains all user preferences and saved values in JSON format.
   "pixelvault_auth": "your_pixelvault_token",
   "hyprland_tool": "hyprshot",
   "kde_tool": "spectacle",
-  "gnome_tool": "gnome-screenshot"
 }
 ```
 
@@ -42,7 +41,6 @@ The settings file contains all user preferences and saved values in JSON format.
 | `screenshot_save_directory` | string | Directory for saving screenshots | Prompted on first use |
 | `hyprland_tool` | string | Preferred tool for Hyprland | `hyprshot` |
 | `kde_tool` | string | Preferred tool for KDE | `spectacle` |
-| `gnome_tool` | string | Preferred tool for GNOME | `gnome-screenshot` |
 | `xfce_tool` | string | Preferred tool for XFCE | `xfce4-screenshooter` |
 | `wayland_tool` | string | Preferred tool for Wayland | `grimblast` |
 | `mate_tool` | string | Preferred tool for MATE | `mate-screenshot` |
@@ -119,15 +117,7 @@ HyprUpld automatically detects your desktop environment and suggests appropriate
 - Primary: `spectacle`
 - Fallback: `flameshot`
 
-**GNOME:**
-- Primary: `grim` + `slurp`
-- Fallback: `grimblast`
-
 #### X11 Environments
-
-**GNOME:**
-- Primary: `gnome-screenshot`
-- Fallback: `flameshot`
 
 **KDE:**
 - Primary: `spectacle`
@@ -543,13 +533,6 @@ bindsym Shift+Print exec hyprupld -imgur
 bindsym Ctrl+Print exec hyprupld -s
 bindsym Alt+Print exec hyprupld -debug
 ```
-
-#### GNOME
-1. Go to Settings → Keyboard → Keyboard Shortcuts
-2. Add custom shortcuts:
-   - Name: "Screenshot"
-   - Command: `hyprupld`
-   - Shortcut: `Print`
 
 ## Troubleshooting Configuration
 
