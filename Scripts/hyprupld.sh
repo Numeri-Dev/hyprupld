@@ -1034,22 +1034,30 @@ take_gnome_screenshot() {
             local error_file=$(mktemp)
             
             # Try to take screenshot with GNOME
-            if ! gnome-screenshot -a -f "$SCREENSHOT_FILE" 2>"$error_file"; then
+            log_info "Attempting to take screenshot with GNOME Screenshot..."
+            
+            # First, remove any existing screenshot file
+            rm -f "$SCREENSHOT_FILE"
+            
+            # Set a timeout for the screenshot command (10 seconds)
+            if ! timeout 10s bash -c "gnome-screenshot -a -f \"$SCREENSHOT_FILE\" 2> \"$error_file\""; then
                 local gnome_error=$(<"$error_file")
                 rm -f "$error_file"
                 
-                # Check for specific error about GNOME Shell integration
+                # Check if the error is about permissions/DBus
                 if [[ "$gnome_error" == *"unable to use GNOME Shell's builtin screenshot interface"* ]] || 
                    [[ "$gnome_error" == *"SelectArea is not allowed"* ]] ||
-                   [[ "$gnome_error" == *"GDBus.Error:org.freedesktop.DBus.Error.AccessDenied"* ]]; then
-                    log_warning "GNOME Shell integration failed: $gnome_error"
-                    log_warning "This is usually due to missing permissions. You may need to grant screenshot permissions to the application."
+                   [[ "$gnome_error" == *"GDBus.Error:org.freedesktop.DBus.Error.AccessDenied"* ]] ||
+                   [[ -z "$gnome_error" ]]; then  # Also catch silent failures
                     
-                    # Show Zenity popup with instructions
+                    log_warning "GNOME Screenshot failed: $gnome_error"
+                    log_warning "This is usually due to missing permissions or the user cancelled the operation."
+                    
+                    # Show Zenity popup with instructions if available
                     if command -v zenity &>/dev/null; then
                         zenity --info --width=500 --title="Screenshot Permissions Required" \
-                            --text="<big><b>Permission Required for Screenshots</b></big>\n\n""
-To take screenshots, please grant screenshot permissions to this application.\n\n""
+                            --text="<big><b>GNOME Screenshot Failed</b></big>\n\n""
+The built-in screenshot tool couldn't capture your screen. This is usually due to missing permissions.\n\n""
 <b>Option 1: Grant Permissions</b>\n""
 1. Open <b>Settings</b>\n""
 2. Go to <b>Privacy</b> > <b>Screen Lock</b>\n""
@@ -1060,7 +1068,7 @@ Flameshot will be used as a fallback. Install it with:\n""
                             --ok-label="Continue with Flameshot"
                     fi
                     
-                    log_warning "Trying fallback method with Flameshot..."
+                    log_warning "Attempting to use Flameshot as fallback..."
                     tool="Flameshot"
                 else
                     log_error "GNOME screenshot failed: $gnome_error"
@@ -1068,10 +1076,16 @@ Flameshot will be used as a fallback. Install it with:\n""
                     return 1
                 fi
             else
-                # Successfully took screenshot with GNOME
-                rm -f "$error_file"
-                play_sound "$SCREENSHOT_SOUND"
-                return 0
+                # Verify the screenshot was actually created and is not empty
+                if [[ -f "$SCREENSHOT_FILE" && -s "$SCREENSHOT_FILE" ]]; then
+                    log_success "Successfully took screenshot with GNOME Screenshot"
+                    rm -f "$error_file"
+                    play_sound "$SCREENSHOT_SOUND"
+                    return 0
+                else
+                    log_warning "GNOME Screenshot completed but no screenshot was captured"
+                    tool="Flameshot"  # Fall back to Flameshot
+                fi
             fi
         fi
     fi
@@ -1080,12 +1094,54 @@ Flameshot will be used as a fallback. Install it with:\n""
     if [[ "$tool" == "Flameshot" ]]; then
         if command -v flameshot &>/dev/null; then
             log_info "Using Flameshot to take screenshot..."
-            if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE" 2>/dev/null; then
-                log_error "Failed to take screenshot with Flameshot"
+            
+            # Ensure the screenshot file doesn't exist before starting Flameshot
+            rm -f "$SCREENSHOT_FILE"
+            
+            # Run Flameshot with a timeout and disable system tray to avoid D-Bus errors
+            # Also capture the output to a temporary file for better error handling
+            local flameshot_output=$(mktemp)
+            local flameshot_error=$(mktemp)
+            
+            # Try to run Flameshot with a timeout and capture all output
+            if ! timeout 15s flameshot gui -p "$SCREENSHOT_FILE" --no-closeaftercopy 2>"$flameshot_error" >"$flameshot_output"; then
+                # If Flameshot failed, try again with --raw flag which might work better in some environments
+                log_warning "First Flameshot attempt failed, trying with --raw flag..."
+                rm -f "$SCREENSHOT_FILE"  # Remove any partial screenshot
+                
+                if ! timeout 15s flameshot gui -p "$SCREENSHOT_FILE" --raw 2>>"$flameshot_error"; then
+                    local error_message=$(<"$flameshot_error" 2>/dev/null || echo "Unknown error")
+                    rm -f "$flameshot_error" "$flameshot_output"
+                    
+                    # Check if this is the system tray error we've seen before
+                    if [[ "$error_message" == *"QDBusTrayIcon"* || "$error_message" == *"DBus"* ]]; then
+                        log_warning "System tray error detected, trying one more time with all non-essential features disabled..."
+                        
+                        # Try one last time with minimal features
+                        if ! timeout 15s flameshot gui -p "$SCREENSHOT_FILE" --no-closeaftercopy --no-notification 2>/dev/null; then
+                            log_error "Failed to take screenshot with Flameshot after multiple attempts"
+                            log_error "Last error: $error_message"
+                            return 1
+                        fi
+                    else
+                        log_error "Failed to take screenshot with Flameshot: $error_message"
+                        return 1
+                    fi
+                fi
+            fi
+            
+            # Clean up temporary files
+            rm -f "$flameshot_error" "$flameshot_output"
+            
+            # Verify the screenshot was actually created and is not empty
+            if [[ -f "$SCREENSHOT_FILE" && -s "$SCREENSHOT_FILE" ]]; then
+                log_success "Successfully took screenshot with Flameshot"
+                play_sound "$SCREENSHOT_SOUND"
+                return 0
+            else
+                log_error "Flameshot completed but no screenshot was captured (user cancellation?)"
                 return 1
             fi
-            play_sound "$SCREENSHOT_SOUND"
-            return 0
         else
             log_error "Flameshot is not installed. Please install it or try again."
             log_info "You can install Flameshot with one of these commands:"
@@ -1093,6 +1149,19 @@ Flameshot will be used as a fallback. Install it with:\n""
             log_info "  - Fedora: sudo dnf install flameshot"
             log_info "  - Arch Linux: sudo pacman -S flameshot"
             log_info "  - OpenSUSE: sudo zypper install flameshot"
+            
+            # Show Zenity popup with installation instructions if available
+            if command -v zenity &>/dev/null; then
+                zenity --error --width=500 --title="Flameshot Not Found" \
+                    --text="<big><b>Flameshot is not installed</b></big>\n\n""
+To take screenshots, please install Flameshot using your package manager.\n\n""
+<b>Installation commands:</b>\n""
+• Debian/Ubuntu: <tt>sudo apt install flameshot</tt>\n""
+• Fedora: <tt>sudo dnf install flameshot</tt>\n""
+• Arch Linux: <tt>sudo pacman -S flameshot</tt>\n""
+• OpenSUSE: <tt>sudo zypper install flameshot</tt>"
+            fi
+            
             return 1
         fi
     fi
