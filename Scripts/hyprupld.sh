@@ -1166,9 +1166,29 @@ To take screenshots, please install Flameshot using your package manager.\n\n""
         fi
     fi
     
-    # If we get here, something went wrong
-    log_error "No valid screenshot tool could be used"
-    log_info "Please install either gnome-screenshot or flameshot"
+    # If we get here, try grim+slurp as a last resort (Wayland only)
+    # Ensure grim and slurp are installed before using them
+    check_screenshot_tool grim
+    check_screenshot_tool slurp
+    if command -v grim &>/dev/null && command -v slurp &>/dev/null; then
+        log_info "Attempting to use grim+slurp as a fallback (Wayland only)..."
+        rm -f "$SCREENSHOT_FILE"
+        if grim -g "$(slurp)" "$SCREENSHOT_FILE"; then
+            if [[ -f "$SCREENSHOT_FILE" && -s "$SCREENSHOT_FILE" ]]; then
+                log_success "Successfully took screenshot with grim+slurp"
+                play_sound "$SCREENSHOT_SOUND"
+                return 0
+            else
+                log_error "grim+slurp completed but no screenshot was captured (user cancellation?)"
+                return 1
+            fi
+        else
+            log_error "grim+slurp failed to take a screenshot."
+            return 1
+        fi
+    fi
+    log_error "No valid screenshot tool could be used (tried GNOME Screenshot, Flameshot, grim+slurp)"
+    log_info "Please install one of: gnome-screenshot, flameshot, grim, slurp"
     return 1
 }
 
