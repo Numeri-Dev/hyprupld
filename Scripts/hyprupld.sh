@@ -1030,23 +1030,46 @@ take_gnome_screenshot() {
             log_warning "gnome-screenshot not found, falling back to Flameshot"
             tool="Flameshot"
         else
+            # Create a temporary file for error output
+            local error_file=$(mktemp)
+            
             # Try to take screenshot with GNOME
-            if ! gnome-screenshot -a -f "$SCREENSHOT_FILE" 2>/tmp/gnome-screenshot-error; then
-                local gnome_error=$(</tmp/gnome-screenshot-error)
-                rm -f /tmp/gnome-screenshot-error
+            if ! gnome-screenshot -a -f "$SCREENSHOT_FILE" 2>"$error_file"; then
+                local gnome_error=$(<"$error_file")
+                rm -f "$error_file"
                 
                 # Check for specific error about GNOME Shell integration
                 if [[ "$gnome_error" == *"unable to use GNOME Shell's builtin screenshot interface"* ]] || 
-                   [[ "$gnome_error" == *"SelectArea is not allowed"* ]]; then
+                   [[ "$gnome_error" == *"SelectArea is not allowed"* ]] ||
+                   [[ "$gnome_error" == *"GDBus.Error:org.freedesktop.DBus.Error.AccessDenied"* ]]; then
                     log_warning "GNOME Shell integration failed: $gnome_error"
-                    log_warning "Falling back to Flameshot"
+                    log_warning "This is usually due to missing permissions. You may need to grant screenshot permissions to the application."
+                    
+                    # Show Zenity popup with instructions
+                    if command -v zenity &>/dev/null; then
+                        zenity --info --width=500 --title="Screenshot Permissions Required" \
+                            --text="<big><b>Permission Required for Screenshots</b></big>\n\n""
+To take screenshots, please grant screenshot permissions to this application.\n\n""
+<b>Option 1: Grant Permissions</b>\n""
+1. Open <b>Settings</b>\n""
+2. Go to <b>Privacy</b> > <b>Screen Lock</b>\n""
+3. Enable <b>Screenshot</b> permission for this application\n\n""
+<b>Option 2: Use Flameshot (Recommended)</b>\n""
+Flameshot will be used as a fallback. Install it with:\n""
+<tt>sudo pacman -S flameshot</tt>" \
+                            --ok-label="Continue with Flameshot"
+                    fi
+                    
+                    log_warning "Trying fallback method with Flameshot..."
                     tool="Flameshot"
                 else
                     log_error "GNOME screenshot failed: $gnome_error"
+                    rm -f "$error_file"
                     return 1
                 fi
             else
                 # Successfully took screenshot with GNOME
+                rm -f "$error_file"
                 play_sound "$SCREENSHOT_SOUND"
                 return 0
             fi
@@ -1056,7 +1079,8 @@ take_gnome_screenshot() {
     # If we get here, either Flameshot was selected or GNOME failed
     if [[ "$tool" == "Flameshot" ]]; then
         if command -v flameshot &>/dev/null; then
-            if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE"; then
+            log_info "Using Flameshot to take screenshot..."
+            if ! timeout 10s flameshot gui -p "$SCREENSHOT_FILE" 2>/dev/null; then
                 log_error "Failed to take screenshot with Flameshot"
                 return 1
             fi
@@ -1064,12 +1088,18 @@ take_gnome_screenshot() {
             return 0
         else
             log_error "Flameshot is not installed. Please install it or try again."
+            log_info "You can install Flameshot with one of these commands:"
+            log_info "  - Debian/Ubuntu: sudo apt install flameshot"
+            log_info "  - Fedora: sudo dnf install flameshot"
+            log_info "  - Arch Linux: sudo pacman -S flameshot"
+            log_info "  - OpenSUSE: sudo zypper install flameshot"
             return 1
         fi
     fi
     
     # If we get here, something went wrong
     log_error "No valid screenshot tool could be used"
+    log_info "Please install either gnome-screenshot or flameshot"
     return 1
 }
 
