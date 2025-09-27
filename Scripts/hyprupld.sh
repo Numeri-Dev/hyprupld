@@ -445,6 +445,7 @@ check_dependencies() {
     log_step "Checking minimal required dependencies"
     local missing_packages=()
 
+
     # Only check for clipboard utility based on display server
     local display_server
     display_server=$(detect_display_server)
@@ -453,6 +454,12 @@ check_dependencies() {
     if [[ "$display_server" == "wayland" ]]; then
         if ! command -v "wl-copy" &>/dev/null; then
             missing_packages+=("wl-clipboard")
+        fi
+        # Check for GNOME/Wayland and ensure screenshot-tool is installed
+        if [[ "${XDG_CURRENT_DESKTOP,,}" == *gnome* ]]; then
+            if ! command -v screenshot-tool &>/dev/null; then
+                missing_packages+=("screenshot-tool")
+            fi
         fi
     else
         if ! command -v "xclip" &>/dev/null; then
@@ -1021,28 +1028,46 @@ take_xfce_screenshot() {
 
 # Take a screenshot in GNOME environments
 take_gnome_screenshot() {
-    # Only use grim+slurp for GNOME screenshots
-    check_screenshot_tool grim
-    check_screenshot_tool slurp
-    if command -v grim &>/dev/null && command -v slurp &>/dev/null; then
-        log_info "Taking screenshot with grim+slurp (GNOME)..."
+    # Use screenshot-tool (xdg-desktop-portal) for region screenshots if available
+    if command -v screenshot-tool &>/dev/null; then
+        log_info "Taking region screenshot with screenshot-tool (xdg-desktop-portal)..."
         rm -f "$SCREENSHOT_FILE"
-        if grim -g "$(slurp)" "$SCREENSHOT_FILE"; then
+        if screenshot-tool --area "$SCREENSHOT_FILE"; then
             if [[ -f "$SCREENSHOT_FILE" && -s "$SCREENSHOT_FILE" ]]; then
-                log_success "Successfully took screenshot with grim+slurp"
+                log_success "Successfully took region screenshot with screenshot-tool"
                 play_sound "$SCREENSHOT_SOUND"
                 return 0
             else
-                log_error "grim+slurp completed but no screenshot was captured (user cancellation?)"
+                log_error "screenshot-tool completed but no screenshot was captured (user cancellation?)"
                 return 1
             fi
         else
-            log_error "grim+slurp failed to take a screenshot."
+            log_error "screenshot-tool failed to take a screenshot."
             return 1
         fi
     else
-        log_error "grim and/or slurp are not available and could not be installed."
-        return 1
+        log_warning "screenshot-tool (xdg-desktop-portal) is not available."
+        # Fallback: prompt user to take a screenshot manually and select the file
+        if command -v zenity &>/dev/null; then
+            zenity --info --width=500 --title="Manual Screenshot Required" \
+                --text="<big><b>Manual Screenshot Required</b></big>\n\n""\
+GNOME/Wayland does not support automated region screenshots without xdg-desktop-portal.\n\n""\
+Please use the built-in screenshot tool (Shift+PrintScreen), save the file, and select it in the next dialog."
+            local selected_file
+            selected_file=$(zenity --file-selection --title="Select Screenshot File" --file-filter="*.png *.jpg *.jpeg")
+            if [[ -n "$selected_file" && -f "$selected_file" ]]; then
+                cp "$selected_file" "$SCREENSHOT_FILE"
+                log_success "Screenshot file selected: $selected_file"
+                play_sound "$SCREENSHOT_SOUND"
+                return 0
+            else
+                log_error "No screenshot file selected."
+                return 1
+            fi
+        else
+            log_error "No supported screenshot method available for GNOME/Wayland. Please install screenshot-tool or use the built-in screenshot tool."
+            return 1
+        fi
     fi
 }
 
