@@ -5,9 +5,9 @@
 # This script provides a flexible screenshot capture and upload solution
 # supporting multiple desktop environments and upload services.
 #==============================================================================
-# Author: Numeri
+# Author: LoonieLoonz
 # License: GPL-2.0
-# Repository: https://github.com/Numeri-Dev/hyprupld
+# Repository: https://github.com/LoonieLoonz/hyprupld
 #==============================================================================
 
 # Configuration paths for settings and package managers
