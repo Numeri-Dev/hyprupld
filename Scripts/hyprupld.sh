@@ -94,7 +94,7 @@ readonly AUDIO_PLAYER_SETTING="preferred_audio_player"
 readonly VERSION="hyprupld-dev"
 
 # Add GitHub API URL and version pattern for updates
-readonly GITHUB_API_URL="https://api.github.com/repos/NumeriDev/hyprupld/releases/latest"
+readonly GITHUB_API_URL="https://api.github.com/repos/LoonieLoonz/hyprupld/releases/latest"
 readonly VERSION_PATTERN="^hyprupld-[0-9]{8}-[0-9]{6}$"
 
 # Sound file paths for feedback
@@ -870,7 +870,7 @@ Examples:
   hyprupld -xbackbone https://example.com token  # Use custom xBackBone instance
 
 For more information and updates, visit:
-https://github.com/Numeri-Dev/hyprupld
+https://github.com/LoonieLoonz/hyprupld
 EOF
 }
 
@@ -896,7 +896,7 @@ take_screenshot() {
                     --text="<big><b>GNOME Screenshotting Not Supported</b></big>\n\n""\
 Due to recent changes in GNOME, region screenshotting is no longer possible in hyprupld.\n\n""\
 Please use another desktop environment or take screenshots manually.\n\n""\
-See: https://github.com/Numeri-Dev/hyprupld for updates."
+See: https://github.com/LoonieLoonz/hyprupld for updates."
             fi
             return 1
             ;;
@@ -1570,7 +1570,7 @@ main() {
 handle_update() {
     if [[ ! -d "$HOME/hyprupld" ]]; then
         log_info "hyprupld source directory not found, cloning repository..."
-        if ! git clone https://github.com/Numeri-Dev/hyprupld.git "$HOME/hyprupld"; then
+        if ! git clone https://github.com/LoonieLoonz/hyprupld.git "$HOME/hyprupld"; then
             log_error "Failed to clone repository"
             exit 1
         fi

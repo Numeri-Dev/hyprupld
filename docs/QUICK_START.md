@@ -18,7 +18,7 @@ Before installing HyprUpld, ensure you have:
 
 ```bash
 # Linux
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/NumeriDev/hyprupld/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/LoonieLoonz/hyprupld/main/install.sh)"
 
 ### Alternative: Package Manager (Arch Linux)
 

@@ -3,7 +3,7 @@
 # AppImage Creation Script
 #==============================================================================
 # Description: Creates AppImages from scripts in the Scripts directory
-# Author: Numeri
+# Author: LoonieLoonz
 # License: GPL-2.0
 #==============================================================================
 # Usage: ./compile.sh [-v|--verbose] [-h|--help]

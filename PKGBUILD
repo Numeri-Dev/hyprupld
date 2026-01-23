@@ -1,4 +1,4 @@
-# Maintainer: Numeri <numeri@numeri.dev>
+# Maintainer: LoonieLoonz <loonz@arch-linux.pro>
 pkgbase=hyprupld
 pkgname=hyprupld-git
 pkgver=r0.g0000000
@@ -6,7 +6,7 @@ pkgrel=1
 url="https://hyprupld.space"
 pkgdesc="A versatile screenshot and file upload utility for Linux with multi-platform support"
 arch=('x86_64')
-url="https://github.com/Numeri-Dev/hyprupld"
+url="https://github.com/LoonieLoonz/hyprupld"
 license=('GPL2')
 depends=('bash' 'fuse2' 'glib2' 'cairo' 'pango')
 makedepends=('git' 'wget' 'imagemagick' 'cmake')

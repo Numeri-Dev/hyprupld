@@ -1,6 +1,6 @@
 # ⚠️ **GNOME is no longer supported**
 
-Due to recent changes in GNOME, region screenshotting is no longer possible in hyprupld. Please use another desktop environment or take screenshots manually. For updates, see: https://github.com/Numeri-Dev/hyprupld
+Due to recent changes in GNOME, region screenshotting is no longer possible in hyprupld. Please use another desktop environment or take screenshots manually. For updates, see: https://github.com/LoonieLoonz/hyprupld
 
 # Desktop Environment Support
 

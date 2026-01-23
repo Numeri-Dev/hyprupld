@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #==============================================================================
 # HyprUpld Installation Script
-# Author: Numeri
+# Author: LoonieLoonz
 # License: GPL-2.0
 # Description: Installs HyprUpld and related tools to the system
 #==============================================================================

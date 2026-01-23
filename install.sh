@@ -3,9 +3,9 @@
 # HyprUpld Installation Script
 # This script clones and installs the HyprUpld application
 #==============================================================================
-# Author: Numeri
+# Author: LoonieLoonz
 # License: GPL-2.0
-# Repository: https://github.com/Numeri-Dev/hyprupld
+# Repository: https://github.com/LoonieLoonz/hyprupld
 #==============================================================================
 
 set -e  # Exit on any error
@@ -20,7 +20,7 @@ fi
 
 # Clone the repository
 echo "Cloning repository..."
-if ! git clone https://github.com/Numeri-Dev/hyprupld.git; then
+if ! git clone https://github.com/LoonieLoonz/hyprupld.git; then
     echo "Error: Failed to clone repository"
     exit 1
 fi

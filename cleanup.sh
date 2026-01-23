@@ -3,9 +3,9 @@
 # HyprUpld Cleanup Script
 # This script removes HyprUpld and its components from the system
 #==============================================================================
-# Author: Numeri
+# Author: LoonieLoonz
 # License: GPL-2.0
-# Repository: https://github.com/Numeri-Dev/hyprupld
+# Repository: https://github.com/LoonieLoonz/hyprupld
 #==============================================================================
 
 set -e  # Exit on any error

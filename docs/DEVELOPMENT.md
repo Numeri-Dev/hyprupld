@@ -84,7 +84,7 @@ zenity      # GUI dialogs for testing
 
 #### 1. Clone Repository
 ```bash
-git clone https://github.com/Numeri-Dev/hyprupld.git
+git clone https://github.com/LoonieLoonz/hyprupld.git
 cd hyprupld
 ```
 
@@ -405,7 +405,7 @@ git clone https://github.com/your-username/hyprupld.git
 cd hyprupld
 
 # Add upstream remote
-git remote add upstream https://github.com/Numeri-Dev/hyprupld.git
+git remote add upstream https://github.com/LoonieLoonz/hyprupld.git
 ```
 
 #### 2. Create Feature Branch
